@@ -1,0 +1,51 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id       Int    @id @default(autoincrement())
+    email    String @unique
+    password String
+
+    profile UserProfile? @relation("UserToProfile")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model UserProfile {
+    id Int @id @default(autoincrement())
+
+    firstname  String
+    middlename String?
+    lastname   String
+
+    userId Int  @unique
+    user   User @relation("UserToProfile", fields: [userId], references: [id])
+}
+
+model Subjects {
+    id          Int    @id @default(autoincrement())
+    subjectName String
+
+    gradeLevelId Int
+
+    gradeLevel GradeLevel @relation("Subjects", fields: [gradeLevelId], references: [id])
+    createdAt  DateTime   @default(now())
+    updatedAt  DateTime   @updatedAt
+}
+
+model GradeLevel {
+    id    Int @id @default(autoincrement())
+    level Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    Subjects Subjects[] @relation("Subjects")
+}
