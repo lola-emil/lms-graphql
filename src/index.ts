@@ -1,35 +1,35 @@
 import express from "express";
-import http from "http";
-import helmet from "helmet";
+import { expressMiddleware } from "@apollo/server/express4";
+
+import graphql from "./graphql";
+
 import cors from "cors";
+import helmet from "helmet";
+
+import zoom from "./zoom";
 
 import Logger from "./util/logger";
-import { PORT } from "./config/constants";
-
-import { graphqlHTTP } from 'express-graphql';
-
-import { typeDefs, resolvers } from './graphql';
-import { makeExecutableSchema } from '@graphql-tools/schema';
 
 
-export const app = express();
-export const server = http.createServer(app);
+async function startServer() {
+    const app = express();
 
-const schema = makeExecutableSchema({
-    typeDefs,
-    resolvers,
-});
+    app.use(express.json());
+    app.use(helmet());
+    app.use(cors());
 
+    await graphql.start();
 
-app.use(helmet());
-app.use(cors());
+    app.use("/graphql", (req: any, res: any, next) =>
+        expressMiddleware(graphql)(req, res, next)
+    );
 
+    app.use("/zoom", zoom);
 
-app.use('/graphql', graphqlHTTP({
-    schema,
-    graphiql: true,
-}));
+    app.listen(4000, () => {
+        Logger.success("🚀 GraphQL ready at http://localhost:4000/graphql");
+        Logger.success("🚀 Zoom ready at http://localhost:4000/zoom");
+    });
+}
 
-server.listen(PORT, () =>
-    Logger.success(`Server is running on http://localhost:${PORT}`)
-);
+startServer();

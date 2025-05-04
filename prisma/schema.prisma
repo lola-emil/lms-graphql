@@ -7,45 +7,161 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+enum Role {
+    ADMIN
+    STUDENT
+    TEACHER
+}
+
 model User {
     id       Int    @id @default(autoincrement())
     email    String @unique
     password String
 
-    profile UserProfile? @relation("UserToProfile")
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-}
-
-model UserProfile {
-    id Int @id @default(autoincrement())
-
     firstname  String
     middlename String?
     lastname   String
 
-    userId Int  @unique
-    user   User @relation("UserToProfile", fields: [userId], references: [id])
-}
-
-model Subjects {
-    id          Int    @id @default(autoincrement())
-    subjectName String
-
-    gradeLevelId Int
-
-    gradeLevel GradeLevel @relation("Subjects", fields: [gradeLevelId], references: [id])
-    createdAt  DateTime   @default(now())
-    updatedAt  DateTime   @updatedAt
-}
-
-model GradeLevel {
-    id    Int @id @default(autoincrement())
-    level Int
+    role Role?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    Subjects Subjects[] @relation("Subjects")
+    StudentEnrolledSubject StudentEnrolledSubject[]
+
+    TeacherAssignedSubject TeacherAssignedSubject[]
+    AssignmentSubmission   AssignmentSubmission[]
+    StudentProgress        StudentProgress[]
+}
+
+model SchoolYear {
+    id Int @id @default(autoincrement())
+
+    yearStart Int
+    yearEnd   Int
+
+    createdAt              DateTime                 @default(now())
+    updatedAt              DateTime                 @updatedAt
+    TeacherAssignedSubject TeacherAssignedSubject[]
+}
+
+model TeacherAssignedSubject {
+    id Int @id @default(autoincrement())
+
+    teacherId Int
+    subjectId Int
+
+    schoolYearId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    teacher                User                     @relation(fields: [teacherId], references: [id])
+    subject                Subject                  @relation(fields: [subjectId], references: [id])
+    schoolYear             SchoolYear               @relation(fields: [schoolYearId], references: [id])
+    StudentEnrolledSubject StudentEnrolledSubject[]
+    Assignment             Assignment[]
+}
+
+model Assignment {
+    id Int @id @default(autoincrement())
+
+    title        String
+    instructions String?
+
+    teacherAssignedSubjectId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    teacherAssignedSubject TeacherAssignedSubject @relation(fields: [teacherAssignedSubjectId], references: [id])
+    AssignmentAttachment   AssignmentAttachment[]
+    AssignmentSubmission   AssignmentSubmission[]
+}
+
+model AssignmentAttachment {
+    id      Int    @id @default(autoincrement())
+    fileURL String
+
+    assignmentId Int
+
+    Assignment Assignment @relation(fields: [assignmentId], references: [id])
+}
+
+model AssignmentSubmission {
+    id      Int     @id @default(autoincrement())
+    title   String?
+    comment String?
+
+    assignmentId Int
+    studentId    Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    Student                        User                             @relation(fields: [studentId], references: [id])
+    Assignment                     Assignment                       @relation(fields: [assignmentId], references: [id])
+    AssignmentSubmissionAttachment AssignmentSubmissionAttachment[]
+}
+
+model AssignmentSubmissionAttachment {
+    id      Int    @id @default(autoincrement())
+    fileURL String
+
+    assignmentSubmissionId Int
+
+    AssignmentSubmission AssignmentSubmission @relation(fields: [assignmentSubmissionId], references: [id])
+}
+
+model StudentProgress {
+    id Int @id @default(autoincrement())
+
+    subjectMaterialId Int
+    studentId         Int
+
+    isDone Boolean @default(true)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    SubjectMaterial SubjectMaterial @relation(fields: [subjectMaterialId], references: [id])
+    Student         User            @relation(fields: [studentId], references: [id])
+}
+
+model StudentEnrolledSubject {
+    id Int @id @default(autoincrement())
+
+    studentId        Int
+    teacherSubjectId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    student        User                   @relation(fields: [studentId], references: [id])
+    teacherSubject TeacherAssignedSubject @relation(fields: [teacherSubjectId], references: [id])
+}
+
+model Subject {
+    id    Int    @id @default(autoincrement())
+    title String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    TeacherAssignedSubject TeacherAssignedSubject[]
+
+    SubjectMaterial SubjectMaterial[]
+}
+
+model SubjectMaterial {
+    id          Int    @id @default(autoincrement())
+    description String
+
+    subjectId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    subject         Subject           @relation(fields: [subjectId], references: [id])
+    StudentProgress StudentProgress[]
 }
