@@ -19,7 +19,8 @@ export const studentEnrolledSubjectTypeDefs = gql`
 
     type Query {
         studentEnrolledSubjects: [StudentEnrolledSubject!]!,
-        studentEnrolledSubject: StudentEnrolledSubject!
+        studentEnrolledSubject(id: Int!): StudentEnrolledSubject!,
+        enrolledSubjectsByStudentId(studentId: Int!): [StudentEnrolledSubject!]!
     }
 
     type Mutation {
@@ -34,7 +35,8 @@ export const studentEnrolledSubjectResolvers = {
     },
     Query: {
         studentEnrolledSubjects: () => prisma.studentEnrolledSubject.findMany(),
-        studentEnrolledSubject: (_: any, args: { id: number; }) => prisma.studentEnrolledSubject.findUnique({ where: { id: args.id } })
+        studentEnrolledSubject: (_: any, args: { id: number; }) => prisma.studentEnrolledSubject.findUnique({ where: { id: args.id } }),
+        enrolledSubjectsByStudentId: (_: any, args: { studentId: number; }) => prisma.studentEnrolledSubject.findMany({ where: { studentId: args.studentId } })
     },
 
     Mutation: {

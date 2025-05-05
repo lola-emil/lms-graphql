@@ -5,7 +5,7 @@ import { KJUR } from 'jsrsasign';
 
 import { inNumberArray, isBetween, isRequiredAllOrNone, validateRequest } from "./validator";
 import { PrismaClient } from "@prisma/client";
-import { ErrorResponse } from "../util/errors";
+import { ErrorResponse } from "../util/response";
 
 const callbackURI = `http://localhost:${PORT}/zoom/oauth/callback`;
 
@@ -23,21 +23,28 @@ export async function authorize(req: Request, res: Response) {
 }
 
 export async function getOAuthToken(req: Request, res: Response) {
-    const authCode = req.query.code;
+    const authCode = req.query.code + "";
     const tokenUrl = "https://zoom.us/oauth/token";
+    const prisma = new PrismaClient();
 
     const basicAuth = Buffer.from(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`).toString("base64");
+
+    const matchedSession = await prisma.meetingSession.findUnique({ where: { authCode: authCode } });
+
+    if (!!matchedSession) {
+        return res.status(200).json(matchedSession);
+    }
 
     try {
         const paramObj = {
             grant_type: "authorization_code",
             code: authCode,
-            redirect_uri: callbackURI
+            redirect_uri: "http://localhost:4200/teacher/meeting"
         };
 
         const params = new URLSearchParams((<any>paramObj));
 
-        const response = await axios.post(`${tokenUrl}?${params.toString()}`, {},
+        const tokenResponse = await axios.post(`${tokenUrl}?${params.toString()}`, {},
             {
                 headers: {
                     Authorization: `Basic ${basicAuth}`,
@@ -45,11 +52,57 @@ export async function getOAuthToken(req: Request, res: Response) {
                 }
             });
 
-        console.log("Access Token:", response.data.access_token);
 
-        return res.status(200).json({
-            access_token: response.data.access_token
+        const body = {
+            "type": 2,
+            "start_time": "2025-05-05T10:00:00Z",
+            "duration": 30,
+            "timezone": "Asia/Manila",
+            "agenda": "Discuss project",
+            "settings": {
+                "join_before_host": true,
+                "approval_type": 0
+            },
+
+            "teacher_id": 1,
+            "teacher_assigned_subject_id": 1
+        };
+
+
+
+        const uri = "https://api.zoom.us/v2/users/me/meetings";
+
+        const response = await axios.post(uri, body,
+            {
+                headers: {
+                    Authorization: `Bearer ${tokenResponse.data.access_token}`
+                }
+            }
+        );
+
+        const result = await prisma.meetingSession.create({
+            data: {
+                meetingID: response.data.id + "",
+                hostEmail: response.data.host_email,
+                hostID: response.data.host_id,
+                joinURL: response.data.join_url,
+                password: response.data.password,
+                startURL: response.data.start_url,
+                topic: response.data.topic,
+                uuid: response.data.uuid,
+                authCode: authCode,
+                createdBy: body.teacher_id,
+                teacherAssignedSubjectId: body.teacher_assigned_subject_id,
+            },
+            include: {
+                teacher: true,
+                teacherSubject: true
+            }
         });
+
+        return res.json({ data: result });
+
+        return res.send("Bullshit");
     } catch (error: any) {
         console.error("Error getting token:", error.response?.data || error.message);
         res.status(500).send("Token exchange failed");
@@ -73,12 +126,25 @@ type MeetingBody = {
 
 // https://api.zoom.us/v2/users/me/meetings
 export async function createMeeting(req: Request, res: Response) {
-    const body = req.body as MeetingBody;
-    const token = req.headers["authorization"];
+    const body = {
+        "type": 2,
+        "start_time": "2025-05-05T10:00:00Z",
+        "duration": 30,
+        "timezone": "Asia/Manila",
+        "agenda": "Discuss project",
+        "settings": {
+            "join_before_host": true,
+            "approval_type": 0
+        },
+
+        "teacher_id": 1,
+        "teacher_assigned_subject_id": 1
+    };
+
+    const token = req.query.token + "";
 
     const uri = "https://api.zoom.us/v2/users/me/meetings";
 
-    console.log(token);
     const response = await axios.post(uri, body,
         {
             headers: {
@@ -160,4 +226,18 @@ export async function SDKEndPoint(req: Request, res: Response) {
     const sdkJWT = KJUR.jws.JWS.sign('HS256', sHeader, sPayload, ZOOM_MEETING_SDK_SECRET);
 
     return res.json({ signature: sdkJWT, sdkKey: process.env.ZOOM_MEETING_SDK_KEY });
+}
+
+export async function getLiveSession(req: Request, res: Response) {
+    const teacherSubjectId = req.query.teacher_subject_id;
+
+    const prisma = new PrismaClient();
+
+    const result = await prisma.meetingSession.findMany({
+        where: {
+            teacherAssignedSubjectId: parseInt(teacherSubjectId + "")
+        },
+    });
+
+    return res.status(200).json(result[result.length - 1]);
 }

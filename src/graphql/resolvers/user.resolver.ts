@@ -1,10 +1,17 @@
 import { PrismaClient } from "@prisma/client";
 import gql from "graphql-tag";
+import argon from "argon2";
 
 
 const prisma = new PrismaClient();
 
 export const userTypeDefs = gql`
+
+    enum Role {
+        ADMIN
+        STUDENT
+        TEACHER
+    }
     type User {
         id: Int!
         email: String!
@@ -13,6 +20,7 @@ export const userTypeDefs = gql`
         middlename: String
         lastname: String
 
+        role: Role!
 
         createdAt: String!
         updatedAt: String!
@@ -24,7 +32,7 @@ export const userTypeDefs = gql`
     }
 
     type Mutation {
-        createUser(firstname: String!, middlename: String, lastname: String, email: String!, password: String!): User!
+        createUser(firstname: String!, middlename: String, lastname: String, email: String!, password: String!, role: Role!): User!
         updateUser(firstname: String!, middlename: String, lastname: String, email: String!, password: String): User!
     }
 `;
@@ -49,14 +57,15 @@ type Args = {
     lastname: string;
     email: string;
     password: string;
+    role: "STUDENT" | "TEACHER" | "ADMIN";
 };
 
 async function createUser(_: any, args: Args) {
-    
+    args.password = await argon.hash(args.password);
     return await prisma.user.create({ data: args });
 }
 
 
-function updateUser(_: any, args: { firstname: string, middlename: string, lastname: string; }) {
+async function updateUser(_: any, args: { firstname: string, middlename: string, lastname: string; }) {
 
 }

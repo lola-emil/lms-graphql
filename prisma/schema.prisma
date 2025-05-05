@@ -33,6 +33,7 @@ model User {
     AssignmentSubmission   AssignmentSubmission[]
     StudentProgress        StudentProgress[]
     MeetingSession         MeetingSession[]
+    QuizSession            QuizSession[]
 }
 
 model SchoolYear {
@@ -150,9 +151,12 @@ model Subject {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    coverImgUrl String? @db.Text
+
     TeacherAssignedSubject TeacherAssignedSubject[]
 
     SubjectMaterial SubjectMaterial[]
+    Question        Question[]
 }
 
 model SubjectMaterial {
@@ -161,11 +165,97 @@ model SubjectMaterial {
 
     subjectId Int
 
+    materialType MaterialType?
+
+    fileURL String?
+
+    mdContentId Int?                      @unique
+    mdContent   SubjectMaterialMDContent? @relation(fields: [mdContentId], references: [id])
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    subject         Subject           @relation(fields: [subjectId], references: [id])
-    StudentProgress StudentProgress[]
+    subject                      Subject                        @relation(fields: [subjectId], references: [id])
+    StudentProgress              StudentProgress[]
+    SubjectMaterialQuizQuestions SubjectMaterialQuizQuestions[]
+    QuizSession                  QuizSession[]
+}
+
+model SubjectMaterialQuizQuestions {
+    id                Int             @id @default(autoincrement())
+    subjectMaterialId Int
+    subjectMaterial   SubjectMaterial @relation(fields: [subjectMaterialId], references: [id])
+    questionId        Int
+    question          Question        @relation(fields: [questionId], references: [id])
+}
+
+model SubjectMaterialMDContent {
+    id              Int              @id @default(autoincrement())
+    content         String           @db.LongText
+    SubjectMaterial SubjectMaterial?
+}
+
+enum MaterialType {
+    DOCUMENT
+    QUIZ
+    MD
+}
+
+model Question {
+    id                           Int                            @id @default(autoincrement())
+    text                         String
+    type                         QuestionType
+    subjectId                    Int
+    subject                      Subject                        @relation(fields: [subjectId], references: [id])
+    choices                      Choice[]
+    createdAt                    DateTime                       @default(now())
+    updatedAt                    DateTime                       @updatedAt
+    SubjectMaterialQuizQuestions SubjectMaterialQuizQuestions[]
+    AnswerKey                    AnswerKey?
+}
+
+model AnswerKey {
+    id          Int      @id @default(autoincrement())
+    explanation String?
+    questionId  Int      @unique
+    question    Question @relation(fields: [questionId], references: [id])
+}
+
+model Choice {
+    id                 Int                 @id @default(autoincrement())
+    text               String
+    isCorrect          Boolean             @default(false)
+    questionId         Int
+    question           Question            @relation(fields: [questionId], references: [id])
+    QuizSessionAnswers QuizSessionAnswer[]
+}
+
+enum QuestionType {
+    MULTIPLE_CHOICE
+    TRUE_FALSE
+    ESSAY
+}
+
+model QuizSession {
+    id        Int @id @default(autoincrement())
+    studentId Int
+    quizId    Int
+
+    createdAt DateTime @default(now())
+
+    student           User                @relation(fields: [studentId], references: [id])
+    quiz              SubjectMaterial     @relation(fields: [quizId], references: [id])
+    QuizSessionAnswer QuizSessionAnswer[]
+}
+
+model QuizSessionAnswer {
+    id         Int     @id @default(autoincrement())
+    sessionId  Int
+    answerText String?
+    choiceId   Int?
+
+    session QuizSession @relation(fields: [sessionId], references: [id])
+    choice  Choice?     @relation(fields: [choiceId], references: [id])
 }
 
 model MeetingSession {
@@ -178,6 +268,10 @@ model MeetingSession {
     startURL  String @db.Text
     joinURL   String @db.Text
     password  String
+
+    authCode String? @unique
+
+    onGoing Boolean?
 
     teacherAssignedSubjectId Int
 

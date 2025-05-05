@@ -6,10 +6,22 @@ const prisma = new PrismaClient();
 
 
 export const subjectMaterialTypeDefs = gql`
+
+    enum MaterialType {
+        DOCUMENT
+        QUIZ
+        MD
+    }
+    
     type SubjectMaterial {
         id: Int!
         description: String!
         subjectId: Int!
+
+        materialType: MaterialType
+        fileURL: String
+
+        mdContentId: Int
 
         createdAt: String!
         updatedAt: String!

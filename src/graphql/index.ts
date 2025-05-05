@@ -11,10 +11,9 @@ import { subjectResolvers, subjectTypDefs } from "./resolvers/subject.resolver";
 import { studentEnrolledSubjectResolvers, studentEnrolledSubjectTypeDefs } from "./resolvers/student-enrolled-subject.resolver";
 import { subjectMaterialResolvers, subjectMaterialTypeDefs } from "./resolvers/subject-material.resolver";
 import { assignemtResolvers, assignmentTypeDefs } from "./resolvers/assignment.resolver";
-
 import { assignmentAttachmentResolvers, assignmentAttachmentTypeDefs } from "./resolvers/assignment-attachment.resolver";
-
 import { assignmentSubmissionResolvers, assignmentSubmissionTypeDefs } from "./resolvers/assignment-submission.resolver";
+import { questionResolvers, questionTypeDef } from "./resolvers/question.resolver";
 
 
 const typeDefs = mergeTypeDefs([
@@ -30,7 +29,8 @@ const typeDefs = mergeTypeDefs([
   subjectMaterialTypeDefs,
   assignmentTypeDefs,
   assignmentAttachmentTypeDefs,
-  assignmentSubmissionTypeDefs
+  assignmentSubmissionTypeDefs,
+  questionTypeDef,
 ]);
 
 const resolvers = mergeResolvers([
@@ -42,7 +42,8 @@ const resolvers = mergeResolvers([
   subjectMaterialResolvers,
   assignemtResolvers,
   assignmentAttachmentResolvers,
-  assignmentSubmissionResolvers
+  assignmentSubmissionResolvers,
+  questionResolvers,
 ]);
 
 
