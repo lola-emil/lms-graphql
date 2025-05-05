@@ -32,6 +32,7 @@ model User {
     TeacherAssignedSubject TeacherAssignedSubject[]
     AssignmentSubmission   AssignmentSubmission[]
     StudentProgress        StudentProgress[]
+    MeetingSession         MeetingSession[]
 }
 
 model SchoolYear {
@@ -61,6 +62,7 @@ model TeacherAssignedSubject {
     schoolYear             SchoolYear               @relation(fields: [schoolYearId], references: [id])
     StudentEnrolledSubject StudentEnrolledSubject[]
     Assignment             Assignment[]
+    MeetingSession         MeetingSession[]
 }
 
 model Assignment {
@@ -164,4 +166,23 @@ model SubjectMaterial {
 
     subject         Subject           @relation(fields: [subjectId], references: [id])
     StudentProgress StudentProgress[]
+}
+
+model MeetingSession {
+    id        Int    @id @default(autoincrement())
+    uuid      String
+    meetingID String
+    hostID    String
+    hostEmail String
+    topic     String
+    startURL  String @db.Text
+    joinURL   String @db.Text
+    password  String
+
+    teacherAssignedSubjectId Int
+
+    createdBy Int
+
+    teacher        User                   @relation(fields: [createdBy], references: [id])
+    teacherSubject TeacherAssignedSubject @relation(fields: [teacherAssignedSubjectId], references: [id])
 }

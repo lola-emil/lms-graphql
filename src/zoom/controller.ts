@@ -1,19 +1,21 @@
 import type { Request, Response } from "express";
 import { ZOOM_CLIENT_SECRET, ZOOM_CLIENT_ID, ZOOM_MEETING_SDK_KEY, ZOOM_MEETING_SDK_SECRET, PORT } from "../config/constants";
 import axios from "axios";
-import { KJUR } from 'jsrsasign'
+import { KJUR } from 'jsrsasign';
 
 import { inNumberArray, isBetween, isRequiredAllOrNone, validateRequest } from "./validator";
+import { PrismaClient } from "@prisma/client";
+import { ErrorResponse } from "../util/errors";
 
 const callbackURI = `http://localhost:${PORT}/zoom/oauth/callback`;
 
 export async function authorize(req: Request, res: Response) {
-    // const { redirect_uri } = req.query;
+    const { redirect_uri } = req.query;
 
-    // if (!redirect_uri)
-    //     throw new ErrorResponse(400, "", { message: "Invalid redirect URI" });
+    if (!redirect_uri)
+        throw new ErrorResponse(400, "", { message: "Invalid redirect URI" });
 
-    const zoomAuthUrl = `https://zoom.us/oauth/authorize?response_type=code&client_id=${ZOOM_CLIENT_ID}&redirect_uri=${callbackURI}`;
+    const zoomAuthUrl = `https://zoom.us/oauth/authorize?response_type=code&client_id=${ZOOM_CLIENT_ID}&redirect_uri=${redirect_uri}`;
 
     return res.status(200).json({
         redirect_url: zoomAuthUrl
@@ -64,23 +66,55 @@ type MeetingBody = {
         join_before_host: boolean;
         approval_type: number;
     };
+    teacher_id: number,
+    teacher_assigned_subject_id: number,
 };
+
 
 // https://api.zoom.us/v2/users/me/meetings
 export async function createMeeting(req: Request, res: Response) {
     const body = req.body as MeetingBody;
     const token = req.headers["authorization"];
 
-    return res.json({ body, token });
+    const uri = "https://api.zoom.us/v2/users/me/meetings";
+
+    console.log(token);
+    const response = await axios.post(uri, body,
+        {
+            headers: {
+                Authorization: token
+            }
+        }
+    );
+
+    const prisma = new PrismaClient();
+
+    const result = await prisma.meetingSession.create({
+        data: {
+            meetingID: response.data.id + "",
+            hostEmail: response.data.host_email,
+            hostID: response.data.host_id,
+            joinURL: response.data.join_url,
+            password: response.data.password,
+            startURL: response.data.start_url,
+            topic: response.data.topic,
+            uuid: response.data.uuid,
+            createdBy: body.teacher_id,
+            teacherAssignedSubjectId: body.teacher_assigned_subject_id,
+        },
+        include: {
+            teacher: true,
+            teacherSubject: true
+        }
+    });
+
+
+    return res.json({ data: result });
 }
 
 export async function joinMeeting(req: Request, res: Response) {
 
 }
-
-
-
-
 
 
 const coerceRequestBody = (body: any) => ({
@@ -96,7 +130,7 @@ const propValidations = {
     expirationSeconds: isBetween(1800, 172800)
 };
 
-const schemaValidations = [isRequiredAllOrNone(['meetingNumber', 'role'])]
+const schemaValidations = [isRequiredAllOrNone(['meetingNumber', 'role'])];
 
 export async function SDKEndPoint(req: Request, res: Response) {
     const requestBody = coerceRequestBody(req.body);
