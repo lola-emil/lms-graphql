@@ -1,9 +1,24 @@
 import { PrismaClient } from "@prisma/client";
 import gql from "graphql-tag";
 import argon from "argon2";
+import Joi from "joi";
+import { ValidationError } from "../../util/errors";
 
 
 const prisma = new PrismaClient();
+
+type User = {
+    id: number;
+    email: string;
+    firstname: string;
+    middlename?: string;
+    lastname: string;
+    role: "ADMIN" | "TEACHER" | "STUDENT",
+
+    password: string;
+    createdAt: string;
+    updatedAt: string;
+};
 
 export const userTypeDefs = gql`
 
@@ -32,8 +47,8 @@ export const userTypeDefs = gql`
     }
 
     type Mutation {
-        createUser(firstname: String!, middlename: String, lastname: String, email: String!, password: String!, role: Role!): User!
-        updateUser(firstname: String!, middlename: String, lastname: String, email: String!, password: String): User!
+        createUser(firstname: String!, middlename: String, lastname: String!, email: String!, password: String!, role: Role!): User!
+        updateUser(firstname: String, middlename: String, lastname: String, email: String, password: String): User!
     }
 `;
 
@@ -51,20 +66,35 @@ export const userResolvers = {
     }
 };
 
-type Args = {
-    firstname: string;
-    middlename: string;
-    lastname: string;
-    email: string;
-    password: string;
-    role: "STUDENT" | "TEACHER" | "ADMIN";
-};
+const userBodySchema = Joi.object({
+    firstname: Joi.string().required(),
+    lastname: Joi.string().required(),
+    middlename: Joi.string(),
+    email: Joi.string().email().required(),
+    password: Joi.string().alphanum().min(8),
+    role: Joi.string().valid("STUDENT", "ADMIN", "TEACHER").required()
+});
 
-async function createUser(_: any, args: Args) {
+async function createUser(_: any, args: User) {
+    const { error, value } = userBodySchema.validate(args);
+
+    if (error) {
+        throw new Error(`Validation error: ${error.details.map(d => d.message).join(', ')}`);
+    }
+
+    const matchedUser = await prisma.user.findUnique({ where: { email: args.email } });
+
+    if (matchedUser)
+        throw new ValidationError(`Validation error: ${[
+            {
+                message: "Email already taken",
+            }
+        ].map(d => d.message).join(',')}`)
+
     args.password = await argon.hash(args.password);
+
     return await prisma.user.create({ data: args });
 }
-
 
 async function updateUser(_: any, args: { firstname: string, middlename: string, lastname: string; }) {
 
