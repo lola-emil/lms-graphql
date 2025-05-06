@@ -7,7 +7,7 @@ import graphql from "./services/graphql";
 import cors from "cors";
 import helmet from "helmet";
 
-import zoom from "./zoom";
+import zoom from "./services/zoom";
 import auth from "./services/auth";
 
 import Logger from "./util/logger";
