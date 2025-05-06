@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import gql from "graphql-tag";
 import argon from "argon2";
 import Joi from "joi";
-import { ValidationError } from "../../util/errors";
+import { ValidationError } from "../../../util/errors";
 
 
 const prisma = new PrismaClient();

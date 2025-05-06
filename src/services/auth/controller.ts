@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Joi from "joi";
-import { ErrorResponse } from "../util/response";
+import { ErrorResponse } from "../../util/response";
 import { PrismaClient } from "@prisma/client";
 import argon from "argon2";
 

@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import gql from "graphql-tag";
-import { GraphQLUpload, FileUpload } from "../../lib/graphql-upload";
+import { GraphQLUpload, FileUpload } from "../../../lib/graphql-upload";
 import path from "path";
 import fs from "fs";
 

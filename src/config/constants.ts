@@ -12,12 +12,13 @@ export const DB_PASSWORD = process.env["DB_PASSWORD"] ?? "";
 export const HOSTNAME = process.env["HOSTNAME"] ?? "localhost";
 export const PORT = parseInt(process.env["PORT"] ?? "5000");
 
+export const BUSINESS_NAME = process.env["BUSINESS_NAME"] ?? "<Business name not set>";
+
 export const JWT_SECRET_KEY = process.env["JWT_SECRET_KEY"] ?? "secret-madafak";
 
 export const MAILER_HOST = process.env["MAILER_HOST"];
 export const MAILER_ADDRESS = process.env["MAILER_ADDRESS"] ?? "staleexam19@gmail.com";
 export const MAILER_PASSWORD = process.env["MAILER_PASSWORD"];
-
 
 export const ZOOM_MEETING_SDK_KEY = process.env["ZOOM_MEETING_SDK_KEY"];
 export const ZOOM_MEETING_SDK_SECRET = process.env["ZOOM_MEETING_SDK_SECRET"];

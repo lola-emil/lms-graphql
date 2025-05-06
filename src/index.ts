@@ -1,13 +1,14 @@
 import express, { ErrorRequestHandler } from "express";
+import http from "http";
 import { expressMiddleware } from "@apollo/server/express4";
 
-import graphql from "./graphql";
+import graphql from "./services/graphql";
 
 import cors from "cors";
 import helmet from "helmet";
 
 import zoom from "./zoom";
-import auth from "./auth";
+import auth from "./services/auth";
 
 import Logger from "./util/logger";
 import { graphqlUploadExpress } from "./lib/graphql-upload";
@@ -15,32 +16,29 @@ import { PORT } from "./config/constants";
 import errorHandler from "./middlewares/errorhandler";
 
 
-async function startServer() {
-    const app = express();
+export const app = express();
+export const server = http.createServer(app);
 
-    app.use(express.json());
-    app.use(helmet());
-    app.use(cors());
+app.use(express.json());
+app.use(helmet());
+app.use(cors());
 
 
-    await graphql.start();
-
-    app.use(graphqlUploadExpress());
+graphql.start().then(() => {
     app.use("/graphql", (req: any, res: any, next) =>
         expressMiddleware(graphql)(req, res, next)
     );
+});
 
-    app.use("/zoom", zoom);
-    app.use("/auth", auth);
+app.use(graphqlUploadExpress());
+
+app.use("/zoom", zoom);
+app.use("/auth", auth);
 
 
+app.use(errorHandler as ErrorRequestHandler);
 
-    app.use(errorHandler as ErrorRequestHandler);
-
-    app.listen(PORT, () => {
-        Logger.success(`🚀 GraphQL ready at http://localhost:${PORT}/graphql`);
-        Logger.success(`🚀 Zoom ready at http://localhost:${PORT}/zoom`);
-    });
-}
-
-startServer();
+server.listen(PORT, () => {
+    Logger.success(`🚀 GraphQL ready at http://localhost:${PORT}/graphql`);
+    Logger.success(`🚀 Zoom ready at http://localhost:${PORT}/zoom`);
+});

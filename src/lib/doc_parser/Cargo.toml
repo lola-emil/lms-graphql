@@ -1,0 +1,16 @@
+[package]
+name = "doc_parser"
+version = "0.1.0"
+license = "ISC"
+edition = "2021"
+exclude = ["index.node"]
+
+[lib]
+crate-type = ["cdylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bytes = "1.9.0"
+neon = "1"
+shiva = { version = "1.4.9", features = ["csv", "xls", "xlsx", "pdf", "docx"] }
