@@ -15,8 +15,10 @@ import { assignmentAttachmentResolvers, assignmentAttachmentTypeDefs } from "./r
 import { assignmentSubmissionResolvers, assignmentSubmissionTypeDefs } from "./resolvers/assignment-submission.resolver";
 import { questionResolvers, questionTypeDef } from "./resolvers/question.resolver";
 
-import {classLevelResolvers, classLevelTypeDefs} from "./resolvers/class-level.resolver";
-import {classSectionResolvers, classSectionTypeDefs} from "./resolvers/class-section.resolver";
+import { classLevelResolvers, classLevelTypeDefs } from "./resolvers/class-level.resolver";
+import { classSectionResolvers, classSectionTypeDefs } from "./resolvers/class-section.resolver";
+
+import { calendarEventResolvers, calendarEventTypeDefs } from "./resolvers/calendar-event.resolver";
 
 const typeDefs = mergeTypeDefs([
   gql`
@@ -35,7 +37,8 @@ const typeDefs = mergeTypeDefs([
   questionTypeDef,
 
   classLevelTypeDefs,
-  classSectionTypeDefs
+  classSectionTypeDefs,
+  calendarEventTypeDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -50,7 +53,8 @@ const resolvers = mergeResolvers([
   assignmentSubmissionResolvers,
   questionResolvers,
   classLevelResolvers,
-  classSectionResolvers
+  classSectionResolvers,
+  calendarEventResolvers,
 ]);
 
 
