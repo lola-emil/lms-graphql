@@ -12,7 +12,6 @@ import auth from "./services/auth";
 import bulkImport from "./services/bulk-import";
 
 import Logger from "./util/logger";
-import { graphqlUploadExpress } from "./lib/graphql-upload";
 import { PORT } from "./config/constants";
 import errorHandler from "./middlewares/errorhandler";
 
@@ -23,7 +22,6 @@ export const server = http.createServer(app);
 app.use(express.json());
 app.use(helmet());
 app.use(cors());
-
 
 graphql.start().then(() => {
     app.use("/graphql", (req: any, res: any, next) =>
