@@ -148,12 +148,16 @@ model Subject {
     id    Int    @id @default(autoincrement())
     title String
 
+    classLevelId Int
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
     coverImgUrl String? @db.Text
 
     TeacherAssignedSubject TeacherAssignedSubject[]
+
+    classLevel ClassLevel @relation(fields: [classLevelId], references: [id])
 
     SubjectMaterial SubjectMaterial[]
     Question        Question[]
@@ -279,4 +283,28 @@ model MeetingSession {
 
     teacher        User                   @relation(fields: [createdBy], references: [id])
     teacherSubject TeacherAssignedSubject @relation(fields: [teacherAssignedSubjectId], references: [id])
+}
+
+model ClassLevel {
+    id Int @id @default(autoincrement())
+
+    level Int
+
+    createdAt    DateTime       @default(now())
+    updatedAt    DateTime       @updatedAt
+    ClassSection ClassSection[]
+    Subject      Subject[]
+}
+
+model ClassSection {
+    id Int @id @default(autoincrement())
+
+    sectionName String
+
+    classLevelId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    classLevel ClassLevel @relation(fields: [classLevelId], references: [id])
 }

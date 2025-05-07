@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import gql from "graphql-tag";
-import { GraphQLUpload, FileUpload } from "../../../lib/graphql-upload";
+import { FileUpload } from "../../../lib/graphql-upload";
 import path from "path";
 import fs from "fs";
 
@@ -14,6 +14,7 @@ export const subjectTypDefs = gql`
         title: String!
 
         coverImgUrl: String
+        classLevelId: Int!
 
         createdAt: String!
         updatedAt: String!
@@ -72,6 +73,7 @@ export const subjectResolvers = {
 type Args = {
     title: string;
     coverImg?: Promise<FileUpload>;
+    classLevelId: number;
 };
 
 async function createNewSubject(_: any, args: Args) {
@@ -83,14 +85,14 @@ async function createNewSubject(_: any, args: Args) {
         if (!mimetype.startsWith('image/')) {
             throw new Error('Only image uploads are allowed');
         }
-    
+
         const uploadsDir = path.join(__dirname, '../../../uploads');
         if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
-    
+
         const uniqueName = `${Date.now()}-${filename}`;
         const filepath = path.join(uploadsDir, uniqueName);
         const fileStream = createReadStream();
-    
+
         await new Promise((resolve, reject) => {
             const writeStream = fs.createWriteStream(filepath);
             fileStream.pipe(writeStream);
@@ -98,7 +100,7 @@ async function createNewSubject(_: any, args: Args) {
             writeStream.on('error', reject);
         });
 
-        fileUrl = `http://localhost:4000/uploads/${uniqueName}`
+        fileUrl = `http://localhost:4000/uploads/${uniqueName}`;
     }
 
 
@@ -106,7 +108,8 @@ async function createNewSubject(_: any, args: Args) {
     return await prisma.subject.create({
         data: {
             title: args.title,
-            coverImgUrl: fileUrl
+            coverImgUrl: fileUrl,
+            classLevelId: args.classLevelId
         }
     });
 }

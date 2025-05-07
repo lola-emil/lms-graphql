@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import gql from "graphql-tag";
-import { Query } from "mysql2/typings/mysql/lib/protocol/sequences/Query";
 
 const prisma = new PrismaClient();
 

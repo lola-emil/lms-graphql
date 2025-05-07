@@ -15,6 +15,8 @@ import { assignmentAttachmentResolvers, assignmentAttachmentTypeDefs } from "./r
 import { assignmentSubmissionResolvers, assignmentSubmissionTypeDefs } from "./resolvers/assignment-submission.resolver";
 import { questionResolvers, questionTypeDef } from "./resolvers/question.resolver";
 
+import {classLevelResolvers, classLevelTypeDefs} from "./resolvers/class-level.resolver";
+import {classSectionResolvers, classSectionTypeDefs} from "./resolvers/class-section.resolver";
 
 const typeDefs = mergeTypeDefs([
   gql`
@@ -31,6 +33,9 @@ const typeDefs = mergeTypeDefs([
   assignmentAttachmentTypeDefs,
   assignmentSubmissionTypeDefs,
   questionTypeDef,
+
+  classLevelTypeDefs,
+  classSectionTypeDefs
 ]);
 
 const resolvers = mergeResolvers([
@@ -44,6 +49,8 @@ const resolvers = mergeResolvers([
   assignmentAttachmentResolvers,
   assignmentSubmissionResolvers,
   questionResolvers,
+  classLevelResolvers,
+  classSectionResolvers
 ]);
 
 
