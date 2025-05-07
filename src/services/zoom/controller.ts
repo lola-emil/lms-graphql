@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
-import { ZOOM_CLIENT_SECRET, ZOOM_CLIENT_ID, ZOOM_MEETING_SDK_KEY, ZOOM_MEETING_SDK_SECRET, PORT } from "../config/constants";
+import { ZOOM_CLIENT_SECRET, ZOOM_CLIENT_ID, ZOOM_MEETING_SDK_KEY, ZOOM_MEETING_SDK_SECRET, PORT } from "../../config/constants";
 import axios from "axios";
 import { KJUR } from 'jsrsasign';
 
 import { inNumberArray, isBetween, isRequiredAllOrNone, validateRequest } from "./validator";
 import { PrismaClient } from "@prisma/client";
-import { ErrorResponse } from "../util/response";
+import { ErrorResponse } from "../../util/response";
 
 const callbackURI = `http://localhost:${PORT}/zoom/oauth/callback`;
 

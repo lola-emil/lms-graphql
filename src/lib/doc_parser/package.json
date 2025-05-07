@@ -11,7 +11,7 @@
     "postcargo-build": "neon dist < cargo.log",
     "postcross-build": "neon dist -m /target < cross.log",
     "debug": "npm run cargo-build --",
-    "copy:node": "cp index.node ../../../../dist/shared/lib/doc_parser",
+    "copy:node": "cp index.node ../../../dist/lib/doc_parser",
     "build": "npm run cargo-build -- --release && npm run copy:node",
     "cross": "npm run cross-build -- --release"
   },
@@ -21,5 +21,6 @@
     "@neon-rs/cli": "0.1.82",
     "@types/node": "^22.13.0",
     "typescript": "^5.7.3"
-  }
+  },
+  "dependencies": {}
 }

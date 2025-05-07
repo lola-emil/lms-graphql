@@ -18,11 +18,13 @@ const config: SMTPTransport.Options = {
 export const transporter = nodemailer.createTransport(config);
 
 export async function sendMail(receiverAddress: string, content: {
+    subject?: string;
     text?: string;
     html?: string;
 }) {
     const info = await transporter.sendMail({
         from: `${BUSINESS_NAME} <${MAILER_ADDRESS}>`,
+        subject: content.subject,
         to: receiverAddress,
         text: content.text,
         html: content.html

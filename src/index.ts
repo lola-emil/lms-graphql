@@ -9,6 +9,7 @@ import helmet from "helmet";
 
 import zoom from "./services/zoom";
 import auth from "./services/auth";
+import bulkImport from "./services/bulk-import";
 
 import Logger from "./util/logger";
 import { graphqlUploadExpress } from "./lib/graphql-upload";
@@ -30,10 +31,11 @@ graphql.start().then(() => {
     );
 });
 
-app.use(graphqlUploadExpress());
+// app.use(graphqlUploadExpress());
 
 app.use("/zoom", zoom);
 app.use("/auth", auth);
+app.use("/bulk-import", bulkImport)
 
 
 app.use(errorHandler as ErrorRequestHandler);
