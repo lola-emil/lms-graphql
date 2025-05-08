@@ -21,7 +21,5 @@ const router = Router();
 router.use(upload.single("file"));
 
 router.post("/bulk-import-user", asyncHandler(Controller.bulkImportUsers));
-router.post("/bulk-teacher-enrollment", asyncHandler(Controller.bulkTeacherEnrollment));
-router.post("/bulk-student-enrollment", asyncHandler(Controller.bulkStudentEnrollment));
 
 export default router;
