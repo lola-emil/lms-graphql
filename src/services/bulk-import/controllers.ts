@@ -1,12 +1,15 @@
 import { Request, Response } from "express";
 import { xlsx_to_csv } from "../../lib/doc_parser";
-import { sendMail } from "../../util/mailer";
+import { mailCredentials, sendMail } from "../../util/mailer";
 
 import parser from "csvtojson";
 import generatePassword from "../../util/passwordGenerator";
 import Joi from "joi";
 import { PrismaClient } from "@prisma/client";
 import Logger from "../../util/logger";
+import argon from "argon2";
+import { BUSINESS_NAME } from "../../config/constants";
+
 
 type User = {
     firstname: string;
@@ -46,6 +49,7 @@ export async function bulkImportUsers(req: Request, res: Response) {
             firstname,
             middlename,
             lastname,
+            role,
         } = parsedData[i];
 
         // skip kung invalid ang data;
@@ -79,21 +83,33 @@ export async function bulkImportUsers(req: Request, res: Response) {
                     middlename,
                     lastname,
                     email,
-                    password,
+                    role,
+                    password: await argon.hash(password),
+                },
+                select: {
+                    email: true,
+                    firstname: true,
+                    middlename: true,
+                    lastname: true,
+
+                    createdAt: true,
+                    updatedAt: true
                 }
             });
 
-            successful.push(user);
-            await sendMail(email, {
-                text: `Good day, imong credentials kay:
-                    email: ${email}
-                    password: ${password}
-                `
+            await mailCredentials(email, {
+                name: `${firstname} ${lastname}`,
+                email,
+                password,
+                business: BUSINESS_NAME
             });
+
+            successful.push(user);
         } catch (error) {
             unsuccessful.push({
                 ...parsedData[i],
             });
+            console.log(error);
             Logger.error("Internal Server Error");
         }
     }
