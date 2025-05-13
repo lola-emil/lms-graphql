@@ -18,6 +18,8 @@ type User = {
     email: string;
     password: string;
 
+    lrn?: string;
+
     createdAt: Date;
     updatedAt: Date;
 
@@ -29,8 +31,10 @@ const userSchema = Joi.object({
     middlename: Joi.string(),
     lastname: Joi.string().required(),
 
+    lrn: Joi.string().optional(),
+
     email: Joi.string().email().required(),
-    role: Joi.string().valid("ADMIN", "STUDENT", "TEACHER").required()
+    // role: Joi.string().valid("ADMIN", "STUDENT", "TEACHER").required()
 });
 
 export async function bulkImportUsers(req: Request, res: Response) {
@@ -49,7 +53,6 @@ export async function bulkImportUsers(req: Request, res: Response) {
             firstname,
             middlename,
             lastname,
-            role,
         } = parsedData[i];
 
         // skip kung invalid ang data;
@@ -83,7 +86,7 @@ export async function bulkImportUsers(req: Request, res: Response) {
                     middlename,
                     lastname,
                     email,
-                    role,
+                    role: "STUDENT",
                     password: await argon.hash(password),
                 },
                 select: {

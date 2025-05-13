@@ -64,7 +64,7 @@ export async function getOAuthToken(req: Request, res: Response) {
                 "approval_type": 0
             },
 
-            "teacher_id": 1,
+            "teacher_id": 3,
             "teacher_assigned_subject_id": 1
         };
 
@@ -101,10 +101,7 @@ export async function getOAuthToken(req: Request, res: Response) {
         });
 
         return res.json({ data: result });
-
-        return res.send("Bullshit");
     } catch (error: any) {
-        console.error("Error getting token:", error.response?.data || error.message);
         res.status(500).send("Token exchange failed");
     }
 }
@@ -119,8 +116,8 @@ type MeetingBody = {
         join_before_host: boolean;
         approval_type: number;
     };
-    teacher_id: number,
-    teacher_assigned_subject_id: number,
+    teacher_id: number;
+    teacher_assigned_subject_id: number;
 };
 
 

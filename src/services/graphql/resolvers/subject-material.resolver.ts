@@ -34,7 +34,7 @@ export const subjectMaterialTypeDefs = gql`
     }
 
     type Mutation {
-        createMaterial(description: String!, subjectId: Int!): SubjectMaterial!
+        createMaterial(description: String!, subjectId: Int!, materialType: MaterialType, fileURL: String, mdContentId: Int): SubjectMaterial!
     }
 `;
 

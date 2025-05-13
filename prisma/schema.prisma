@@ -22,6 +22,8 @@ model User {
     middlename String?
     lastname   String
 
+    lrn String?
+
     role Role?
 
     createdAt DateTime @default(now())

@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 
 
 export const subjectTypDefs = gql`
-    type Subject {
+    type Subject {  
         id: Int!
         title: String!
 
@@ -24,7 +24,7 @@ export const subjectTypDefs = gql`
     }
 
     type Query {
-        subjects: [Subject!]!
+        subjects(offset: Int, limit: Int): [Subject!]!
         subject(id: Int!): Subject!
     }
 
@@ -46,13 +46,18 @@ export const subjectResolvers = {
         }
     },
     Query: {
-        subjects: () =>
-            prisma.subject.findMany({
-                include: {
-                    SubjectMaterial: true,
-                    TeacherAssignedSubject: true
-                }
-            }),
+        subjects: async (_: any, args: { offset: number, limit: number; }) => {
+            const { offset = 0, limit = 10 } = args;
+
+            const subjects = await prisma.subject.findMany({
+                skip: offset,
+                take: limit,
+                orderBy: { createdAt: "desc" }
+            });
+
+            return subjects;
+        },
+
         subject: (_: any, args: { id: number; }) =>
             prisma.subject.findUnique({
                 where: {
