@@ -3,6 +3,8 @@ import gql from "graphql-tag";
 import argon from "argon2";
 import Joi from "joi";
 import { ValidationError } from "../../../util/errors";
+import { mailCredentials } from "../../../util/mailer";
+import { BUSINESS_NAME } from "../../../config/constants";
 
 
 const prisma = new PrismaClient();
@@ -69,13 +71,14 @@ export const userResolvers = {
 const userBodySchema = Joi.object({
     firstname: Joi.string().required(),
     lastname: Joi.string().required(),
-    middlename: Joi.string(),
+    middlename: Joi.optional(),
     email: Joi.string().email().required(),
     password: Joi.string().alphanum().min(8),
     role: Joi.string().valid("STUDENT", "ADMIN", "TEACHER").required()
 });
 
 async function createUser(_: any, args: User) {
+    args.middlename = args.middlename;
     const { error, value } = userBodySchema.validate(args);
 
     if (error) {
@@ -89,11 +92,21 @@ async function createUser(_: any, args: User) {
             {
                 message: "Email already taken",
             }
-        ].map(d => d.message).join(',')}`)
+        ].map(d => d.message).join(',')}`);
 
+    let unhashed = args.password;
     args.password = await argon.hash(args.password);
 
-    return await prisma.user.create({ data: args });
+    const result = await prisma.user.create({ data: args });
+
+    await mailCredentials(result.email, {
+        name: `${result.firstname} ${result.lastname}`,
+        email: result.email,
+        business: BUSINESS_NAME,
+        password: unhashed
+    });
+
+    return result;
 }
 
 async function updateUser(_: any, args: { firstname: string, middlename: string, lastname: string; }) {
