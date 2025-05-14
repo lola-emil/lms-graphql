@@ -191,16 +191,13 @@ model Subject {
 
 model SubjectMaterial {
     id          Int    @id @default(autoincrement())
-    description String
+    title String?
 
     subjectId Int
 
     materialType MaterialType?
 
-    fileURL String?
-
-    mdContentId Int?                      @unique
-    mdContent   SubjectMaterialMDContent? @relation(fields: [mdContentId], references: [id])
+     content String?  @db.LongText
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -209,6 +206,16 @@ model SubjectMaterial {
     StudentProgress              StudentProgress[]
     SubjectMaterialQuizQuestions SubjectMaterialQuizQuestions[]
     QuizSession                  QuizSession[]
+    SubjectMaterialAttachments   SubjectMaterialAttachments[]
+}
+
+model SubjectMaterialAttachments {
+    id                Int    @id @default(autoincrement())
+    filename String?
+    fileURL           String
+    subjectMaterialId Int
+
+    subjectMaterial SubjectMaterial @relation(fields: [subjectMaterialId], references: [id])
 }
 
 model SubjectMaterialQuizQuestions {
@@ -217,12 +224,6 @@ model SubjectMaterialQuizQuestions {
     subjectMaterial   SubjectMaterial @relation(fields: [subjectMaterialId], references: [id])
     questionId        Int
     question          Question        @relation(fields: [questionId], references: [id])
-}
-
-model SubjectMaterialMDContent {
-    id              Int              @id @default(autoincrement())
-    content         String           @db.LongText
-    SubjectMaterial SubjectMaterial?
 }
 
 enum MaterialType {

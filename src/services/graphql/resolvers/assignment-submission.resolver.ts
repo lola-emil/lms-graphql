@@ -69,9 +69,7 @@ export const assignmentSubmissionResolvers = {
         assignment: (parent: any) => prisma.assignment.findUnique({ where: { id: parent.assignmentId } }),
         student: (parent: any) => prisma.user.findUnique({ where: { id: parent.studentId } }),
         feedback: async (parent: any) => {
-
             const result = await prisma.assignmentFeedback.findMany({ where: { studentSubmissionId: parent.id } })
-            console.log(parent.id, result);
             return result
         }
     },

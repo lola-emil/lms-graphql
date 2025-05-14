@@ -14,18 +14,18 @@ export const subjectMaterialTypeDefs = gql`
     
     type SubjectMaterial {
         id: Int!
-        description: String!
+        title: String
         subjectId: Int!
 
         materialType: MaterialType
-        fileURL: String
 
-        mdContentId: Int
-
+        content: String
         createdAt: String!
         updatedAt: String!
 
         subject: Subject!
+
+        attachments: [SubjectMaterialAttachment]
     }
 
     type Query {
@@ -34,7 +34,7 @@ export const subjectMaterialTypeDefs = gql`
     }
 
     type Mutation {
-        createMaterial(description: String!, subjectId: Int!, materialType: MaterialType, fileURL: String, mdContentId: Int): SubjectMaterial!
+        createMaterial(title: String!, subjectId: Int!, materialType: MaterialType, fileURL: String, mdContentId: Int): SubjectMaterial!
     }
 `;
 
@@ -42,6 +42,10 @@ export const subjectMaterialResolvers = {
     SubjectMaterial: {
         subject: async (parent: any) => {
             return await prisma.subject.findUnique({ where: { id: parent.subjectId } });
+        },
+        attachments: (parent: any) => {
+            console.log(parent);
+            return prisma.subjectMaterialAttachments.findMany({ where: { subjectMaterialId: parent.id } });
         }
     },
     Query: {
@@ -58,7 +62,7 @@ export const subjectMaterialResolvers = {
 };
 
 type Args = {
-    description: string;
+    title: string;
     subjectId: number;
 };
 

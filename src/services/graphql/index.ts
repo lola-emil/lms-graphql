@@ -22,6 +22,8 @@ import { calendarEventResolvers, calendarEventTypeDefs } from "./resolvers/calen
 
 import {assignmentFeedbackDefs, assignmentFeedbackResolvers} from "./resolvers/assignment-feedback.resolver";
 
+import {subjectMaterialAttachmentDefs, subjectMaterialAttachmentResolvers} from "./resolvers/subject-material-attachment.resolver";
+
 const typeDefs = mergeTypeDefs([
   gql`
       type Query
@@ -42,6 +44,7 @@ const typeDefs = mergeTypeDefs([
   classSectionTypeDefs,
   calendarEventTypeDefs,
   assignmentFeedbackDefs,
+  subjectMaterialAttachmentDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -59,6 +62,7 @@ const resolvers = mergeResolvers([
   classSectionResolvers,
   calendarEventResolvers,
   assignmentFeedbackResolvers,
+  subjectMaterialAttachmentResolvers
 ]);
 
 
