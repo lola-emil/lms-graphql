@@ -28,6 +28,8 @@ export const assignmentTypeDefs = gql`
 
 
         assignmentSubmissions: [AssignmentSubmission]
+
+        studentSubmissions(studentId: Int!): [AssignmentSubmission]
     }
 
     type Query {
@@ -45,7 +47,10 @@ export const assignemtResolvers = {
     Assignment: {
         assignmentAttachments: (parent: any) => prisma.assignmentAttachment.findMany({ where: { assignmentId: parent.id } }),
         teacherAssignedSubject: (parent: any) => prisma.teacherAssignedSubject.findUnique({ where: { id: parent.teacherAssignedSubjectId } }),
-        assignmentSubmissions: (parent: any) => prisma.assignmentSubmission.findMany({ where: { assignmentId: parent.id }, orderBy: { createdAt: "desc" } })
+        assignmentSubmissions: (parent: any) => prisma.assignmentSubmission.findMany({ where: { assignmentId: parent.id }, orderBy: { createdAt: "desc" } }),
+        studentSubmissions: (parent: any, args: { studentId: number; }) => {
+            return prisma.assignmentSubmission.findMany({ where: { studentId: args.studentId, assignmentId: parent.id } });
+        }
     },
     Query: {
         assignments: (_: any, args: { teacherSubjectId: number; }) => prisma.assignment.findMany({

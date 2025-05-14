@@ -38,6 +38,7 @@ model User {
     QuizSession            QuizSession[]
     CalendarEvents         CalendarEvent[]
     Notifications          Notifications[]
+    AssignmentFeedback     AssignmentFeedback[]
 }
 
 model SchoolYear {
@@ -113,6 +114,7 @@ model AssignmentSubmission {
     Student                        User                             @relation(fields: [studentId], references: [id])
     Assignment                     Assignment                       @relation(fields: [assignmentId], references: [id])
     AssignmentSubmissionAttachment AssignmentSubmissionAttachment[]
+    AssignmentFeedback             AssignmentFeedback[]
 }
 
 model AssignmentSubmissionAttachment {
@@ -122,6 +124,22 @@ model AssignmentSubmissionAttachment {
     assignmentSubmissionId Int
 
     AssignmentSubmission AssignmentSubmission @relation(fields: [assignmentSubmissionId], references: [id])
+}
+
+model AssignmentFeedback {
+    id      Int     @id @default(autoincrement())
+    comment String?
+    mark    Float
+
+    studentSubmissionId Int
+
+    teacherId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    assignmentSubmission AssignmentSubmission @relation(fields: [studentSubmissionId], references: [id])
+    teacher              User                 @relation(fields: [teacherId], references: [id])
 }
 
 model StudentProgress {

@@ -3,6 +3,7 @@ import http from "http";
 import { expressMiddleware } from "@apollo/server/express4";
 
 import graphql from "./services/graphql";
+import graphqlExt from "./services/graphql-ext";
 
 import cors from "cors";
 import helmet from "helmet";
@@ -27,13 +28,14 @@ graphql.start().then(() => {
     app.use("/graphql", (req: any, res: any, next) =>
         expressMiddleware(graphql)(req, res, next)
     );
+
+    app.use("/graphql-ext", graphqlExt);
 });
 
-// app.use(graphqlUploadExpress());
-
+app.use("/public", express.static("public"));
 app.use("/zoom", zoom);
 app.use("/auth", auth);
-app.use("/bulk-import", bulkImport)
+app.use("/bulk-import", bulkImport);
 
 
 app.use(errorHandler as ErrorRequestHandler);

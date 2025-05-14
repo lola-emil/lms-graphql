@@ -19,6 +19,8 @@ export const assignmentSubmissionTypeDefs = gql`
 
         assignment: Assignment!
         student: User!
+
+        feedback: [AssignmentFeedback]
     }
 
     type AssignmentSubmissionAttachment {
@@ -31,6 +33,7 @@ export const assignmentSubmissionTypeDefs = gql`
 
     type Query {
         assignmentSubmissions: [AssignmentSubmission!]!
+        studentAssignmentSubmissions(studentId: Int!): [AssignmentSubmission]
         assignmentSubmission(id: Int!): AssignmentSubmission
         assignmentSubmissionAttachments(submissionId: Int!): [AssignmentSubmissionAttachment!]!
         assignmentSubmissionAttachment(id: Int!): AssignmentSubmissionAttachment!
@@ -64,10 +67,19 @@ export const assignmentSubmissionTypeDefs = gql`
 export const assignmentSubmissionResolvers = {
     AssignmentSubmission: {
         assignment: (parent: any) => prisma.assignment.findUnique({ where: { id: parent.assignmentId } }),
-        student: (parent: any) => prisma.user.findUnique({ where: { id: parent.studentId } })
+        student: (parent: any) => prisma.user.findUnique({ where: { id: parent.studentId } }),
+        feedback: async (parent: any) => {
+
+            const result = await prisma.assignmentFeedback.findMany({ where: { studentSubmissionId: parent.id } })
+            console.log(parent.id, result);
+            return result
+        }
     },
     Query: {
         assignmentSubmissions: () => prisma.assignmentSubmission.findMany(),
+        studentAssignmentSubmissions: (_: any, args: { studentId: number; }) => {
+            return prisma.assignmentSubmission.findMany({ where: { studentId: args.studentId } });
+        },
         assignmentSubmission: (_: any, args: { id: number; }) =>
             prisma.assignmentSubmission.findUnique({
                 where:

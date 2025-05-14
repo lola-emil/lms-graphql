@@ -20,6 +20,8 @@ import { classSectionResolvers, classSectionTypeDefs } from "./resolvers/class-s
 
 import { calendarEventResolvers, calendarEventTypeDefs } from "./resolvers/calendar-event.resolver";
 
+import {assignmentFeedbackDefs, assignmentFeedbackResolvers} from "./resolvers/assignment-feedback.resolver";
+
 const typeDefs = mergeTypeDefs([
   gql`
       type Query
@@ -39,6 +41,7 @@ const typeDefs = mergeTypeDefs([
   classLevelTypeDefs,
   classSectionTypeDefs,
   calendarEventTypeDefs,
+  assignmentFeedbackDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -55,6 +58,7 @@ const resolvers = mergeResolvers([
   classLevelResolvers,
   classSectionResolvers,
   calendarEventResolvers,
+  assignmentFeedbackResolvers,
 ]);
 
 
