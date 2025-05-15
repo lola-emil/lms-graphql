@@ -7,9 +7,8 @@ const prisma = new PrismaClient();
 export const subjectMaterialTypeDefs = gql`
 
     enum MaterialType {
-        DOCUMENT
+        MODULE
         QUIZ
-        MD
     }
     
     type SubjectMaterial {
@@ -26,15 +25,19 @@ export const subjectMaterialTypeDefs = gql`
         subject: Subject!
 
         attachments: [SubjectMaterialAttachment]
+
+        questions: [Question]
     }
 
     type Query {
         subjectMaterials: [SubjectMaterial!]!,
-        subjectMaterial(id: Int!): SubjectMaterial
+        subjectMaterial(id: Int!): SubjectMaterial,
+        quizzes: [SubjectMaterial]
     }
 
     type Mutation {
         createMaterial(title: String!, subjectId: Int!, materialType: MaterialType, fileURL: String, mdContentId: Int): SubjectMaterial!
+        # createQuiz(title: String!, subjectId: Int!, questions: [Question!]!): SubjectMaterial!
     }
 `;
 
@@ -44,8 +47,10 @@ export const subjectMaterialResolvers = {
             return await prisma.subject.findUnique({ where: { id: parent.subjectId } });
         },
         attachments: (parent: any) => {
-            console.log(parent);
             return prisma.subjectMaterialAttachments.findMany({ where: { subjectMaterialId: parent.id } });
+        },
+        questions: (parent: any) => {
+            return prisma.question.findMany({ where: { subjectMaterialId: parent.id } });
         }
     },
     Query: {
@@ -54,7 +59,8 @@ export const subjectMaterialResolvers = {
                 subject: true
             }
         }),
-        subjectMaterial: async (_: any, args: { id: number; }) => await prisma.subjectMaterial.findUnique({ where: { id: args.id }, include: { subject: true } })
+        subjectMaterial: async (_: any, args: { id: number; }) => await prisma.subjectMaterial.findUnique({ where: { id: args.id }, include: { subject: true } }),
+        quizzes: async (parent: any) => await prisma.subjectMaterial.findMany({ where: { materialType: "QUIZ" } })
     },
     Mutation: {
         createMaterial
@@ -68,5 +74,10 @@ type Args = {
 
 
 async function createMaterial(_: any, args: Args) {
-    return await prisma.subjectMaterial.create({ data: args });
+    return await prisma.subjectMaterial.create({
+        data: {
+            ...args,
+            materialType: "MODULE"
+        }
+    });
 }

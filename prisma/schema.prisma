@@ -186,18 +186,17 @@ model Subject {
     classLevel ClassLevel @relation(fields: [classLevelId], references: [id])
 
     SubjectMaterial SubjectMaterial[]
-    Question        Question[]
 }
 
 model SubjectMaterial {
-    id          Int    @id @default(autoincrement())
+    id    Int     @id @default(autoincrement())
     title String?
 
     subjectId Int
 
     materialType MaterialType?
 
-     content String?  @db.LongText
+    content String? @db.LongText
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -207,11 +206,12 @@ model SubjectMaterial {
     SubjectMaterialQuizQuestions SubjectMaterialQuizQuestions[]
     QuizSession                  QuizSession[]
     SubjectMaterialAttachments   SubjectMaterialAttachments[]
+    Question                     Question[]
 }
 
 model SubjectMaterialAttachments {
-    id                Int    @id @default(autoincrement())
-    filename String?
+    id                Int     @id @default(autoincrement())
+    filename          String?
     fileURL           String
     subjectMaterialId Int
 
@@ -223,48 +223,39 @@ model SubjectMaterialQuizQuestions {
     subjectMaterialId Int
     subjectMaterial   SubjectMaterial @relation(fields: [subjectMaterialId], references: [id])
     questionId        Int
-    question          Question        @relation(fields: [questionId], references: [id])
+    // question          Question        @relation(fields: [questionId], references: [id])
 }
 
 enum MaterialType {
-    DOCUMENT
+    MODULE
     QUIZ
-    MD
 }
 
 model Question {
     id                           Int                            @id @default(autoincrement())
-    text                         String
+    questionText                 String
     type                         QuestionType
-    subjectId                    Int
-    subject                      Subject                        @relation(fields: [subjectId], references: [id])
-    choices                      Choice[]
+    subjectMaterialId            Int
+    subject                      SubjectMaterial                @relation(fields: [subjectMaterialId], references: [id])
+    answers                      Answer[]
     createdAt                    DateTime                       @default(now())
     updatedAt                    DateTime                       @updatedAt
-    SubjectMaterialQuizQuestions SubjectMaterialQuizQuestions[]
-    AnswerKey                    AnswerKey?
-}
-
-model AnswerKey {
-    id          Int      @id @default(autoincrement())
-    explanation String?
-    questionId  Int      @unique
-    question    Question @relation(fields: [questionId], references: [id])
-}
-
-model Choice {
-    id                 Int                 @id @default(autoincrement())
-    text               String
-    isCorrect          Boolean             @default(false)
-    questionId         Int
-    question           Question            @relation(fields: [questionId], references: [id])
-    QuizSessionAnswers QuizSessionAnswer[]
+    // SubjectMaterialQuizQuestions SubjectMaterialQuizQuestions[]
 }
 
 enum QuestionType {
     MULTIPLE_CHOICE
     TRUE_FALSE
-    ESSAY
+    SHORT_ANSWER
+}
+
+model Answer {
+    id                 Int                 @id @default(autoincrement())
+    answerText         String
+    isCorrect          Boolean             @default(false)
+    questionId         Int
+    question           Question            @relation(fields: [questionId], references: [id])
+    QuizSessionAnswers QuizSessionAnswer[]
 }
 
 model QuizSession {
@@ -286,7 +277,7 @@ model QuizSessionAnswer {
     choiceId   Int?
 
     session QuizSession @relation(fields: [sessionId], references: [id])
-    choice  Choice?     @relation(fields: [choiceId], references: [id])
+    choice  Answer?     @relation(fields: [choiceId], references: [id])
 }
 
 model MeetingSession {

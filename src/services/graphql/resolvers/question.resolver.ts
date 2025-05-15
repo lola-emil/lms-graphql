@@ -12,25 +12,21 @@ export const questionTypeDef = gql`
 
     type Question {
         id: Int!
-        text: String!
+        questionText: String!
         type: QuestionType
-        subjectId: Int!
-        subject: Subject
-        choices: [Choice!]
+        subjectMaterialId: Int!
+        subjectMaterial: SubjectMaterial
+        answers: [Answer!]
         createdAt: String
         updatedAt: String
         AnswerKey: AnswerKey
     }
 
-    input ChoiceInput {         
-        text: String!
-        isCorrect: Boolean!
-    }
-
-    type Choice {
+    type Answer {
         id: Int!
-        text: String!
+        answerText: String!
         questionId: Int!
+        isCorrect: Boolean
         question: Question
     }
 
@@ -46,7 +42,7 @@ export const questionTypeDef = gql`
         questions: [Question!]!
         question(id: Int): Question
 
-        choices(questionId: Int): [Choice!]!
+        answers(questionId: Int): [Answer!]!
 
         answerKeys(questionId: Int): AnswerKey
     }
@@ -55,22 +51,21 @@ export const questionTypeDef = gql`
         createQuestion(text: String! 
             type: QuestionType 
             subjectId: Int! 
-            choices: [ChoiceInput]
         ): Question
-        createChoice(text: String!, questionId: Int!, isCorrect: Boolean): Choice!
+        createChoice(text: String!, questionId: Int!, isCorrect: Boolean): Answer!
     }
 `;
 
 
 export const questionResolvers = {
     Question: {
-        choices: (parent: any) => prisma.choice.findMany({ where: { questionId: parent.id } })
+        answers: (parent: any) => prisma.answer.findMany({ where: { questionId: parent.id } })
     },
     Query: {
         questions: () => prisma.question.findMany(),
         question: (_: any, args: { id: number; }) => prisma.question.findUnique({ where: { id: args.id } }),
-        choices: (_: any, args: { questionId: number; }) => prisma.choice.findMany({ where: { questionId: args.questionId } }),
-        answerKeys: (_: any, args: { questionId: number; }) => prisma.answerKey.findMany({ where: { questionId: args.questionId } })
+        answers: (_: any, args: { questionId: number; }) => prisma.answer.findMany({ where: { questionId: args.questionId } }),
+        // answerKeys: (_: any, args: { questionId: number; }) => prisma.answerKey.findMany({ where: { questionId: args.questionId } })
     },
     Mutation: {
         createQuestion,
@@ -79,42 +74,42 @@ export const questionResolvers = {
 };
 
 type QuestionArgs = {
-    text: string;
-    type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "ESSAY";
-    subjectId: number;
-    choices?: ChoiceArgs[];
+    questionText: string;
+    type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+    subjectMaterialId: number;
+    answers?: AnswerArgs[];
 };
 
 
 async function createQuestion(_: any, args: QuestionArgs) {
     const {
         type,
-        choices,
-        subjectId,
-        text
+        answers,
+        subjectMaterialId,
+        questionText
     } = args;
 
     return await prisma.question.create({
         data: {
             type,
-            subjectId,
-            text,
-            choices: !!choices ? {
-                create: choices
+            subjectMaterialId,
+            questionText,
+            answers: !!answers ? {
+                create: answers
             } : {}
         },
         include: {
-            choices: true
+            answers: true
         }
     });
 }
 
-type ChoiceArgs = {
-    text: string;
+type AnswerArgs = {
+    answerText: string;
     questionId: number;
     isCorrect: boolean;
 };
 
-async function createChoice(_: any, args: ChoiceArgs) {
-    return await prisma.choice.create({ data: args });
+async function createChoice(_: any, args: AnswerArgs) {
+    return await prisma.answer.create({ data: args });
 }

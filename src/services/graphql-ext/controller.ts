@@ -17,8 +17,6 @@ export async function submitAssignment(req: Request, res: Response) {
         attachments
     };
 
-    console.log("bullshit", attachments);
-
     const submissionTransaction = await prisma.$transaction(async (trx) => {
         const assignment = await trx.assignment.findUnique({ where: { id: parseInt(body.assignmentId) } });
         const submission = await trx.assignmentSubmission.create({
@@ -46,8 +44,6 @@ export async function submitAssignment(req: Request, res: Response) {
     });
 
 
-    console.log(submissionTransaction);
-
     return res.status(200).json({
         message: "Para submit",
         body,
@@ -60,9 +56,6 @@ export async function uploadSubjectMaterial(req: Request, res: Response) {
     const body = req.body;
 
     const prisma = new PrismaClient();
-
-    console.log(attachments);
-
 
     const materialTransaction = await prisma.$transaction(async (trx) => {
         const material = await trx.subjectMaterial.create({
@@ -112,4 +105,71 @@ export async function addSubject(req: Request, res: Response) {
     });
 
     return res.status(200).json(subject);
+}
+
+type QuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
+
+type Question = {
+    id: string;
+    questionText: string;
+    type: QuestionType;
+    answers: {
+        answerText: string;
+        correct: boolean;
+    }[];
+};
+
+type Subject = {
+    id: number;
+    title: string;
+};
+
+export async function createQuiz(req: Request, res: Response) {
+    const body = req.body as {
+        subjectId: number;
+        title: string;
+        questions: Question[];
+    };
+
+    const prisma = new PrismaClient();
+
+    try {
+        const result = await prisma.$transaction(async trx => {
+            // Create the quiz material
+            const subjectMaterial = await trx.subjectMaterial.create({
+                data: {
+                    materialType: "QUIZ",
+                    title: body.title,
+                    subjectId: body.subjectId
+                }
+            });
+
+            // Loop through questions and create them one by one
+            for (const question of body.questions) {
+                const createdQuestion = await trx.question.create({
+                    data: {
+                        questionText: question.questionText,
+                        type: question.type,
+                        subjectMaterialId: subjectMaterial.id
+                    }
+                });
+
+                // Create answers associated with this question
+                await trx.answer.createMany({
+                    data: question.answers.map(answer => ({
+                        answerText: answer.answerText,
+                        isCorrect: answer.correct,
+                        questionId: createdQuestion.id
+                    }))
+                });
+            }
+
+            return subjectMaterial;
+        });
+
+        return res.status(200).json({ success: true, quiz: result });
+    } catch (err) {
+        console.error("Quiz creation error:", err);
+        return res.status(500).json({ success: false, message: "Quiz creation failed" });
+    }
 }

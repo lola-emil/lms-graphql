@@ -26,4 +26,6 @@ router.post("/submit-assignment", asyncHandler(Controller.submitAssignment));
 router.post("/upload-subject-material", asyncHandler(Controller.uploadSubjectMaterial));
 router.post("/add-subject", asyncHandler(Controller.addSubject));
 
+router.post("/create-quiz", asyncHandler(Controller.createQuiz));
+
 export default router;

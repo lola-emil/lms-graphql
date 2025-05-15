@@ -23,7 +23,7 @@ type User = {
 };
 
 export const userTypeDefs = gql`
-
+    
     enum Role {
         ADMIN
         STUDENT
