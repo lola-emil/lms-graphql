@@ -173,3 +173,56 @@ export async function createQuiz(req: Request, res: Response) {
         return res.status(500).json({ success: false, message: "Quiz creation failed" });
     }
 }
+
+
+export async function finishQuiz(req: Request, res: Response) {
+    const body = req.body as {
+        id: number;
+        studentId: number;
+        answers: {
+            id: number;
+            answer: any;
+        }[];
+    };
+    const prisma = new PrismaClient();
+
+
+
+    const sessionTransaction = await prisma.$transaction(async trx => {
+        let score = 0;
+        for (let i = 0; i < body.answers.length; i++) {
+            const userAnswer = body.answers[i];
+            let question = await trx.question.findUnique({ where: { id: userAnswer.id } });
+
+            if (question) {
+                if (question.type == "TRUE_FALSE" || question.type == "MULTIPLE_CHOICE") {
+                    if (!userAnswer.answer) continue;
+
+                    const answer = await trx.answer.findUnique({
+                        where: {
+                            id: userAnswer.answer
+                        }
+                    });
+                    if (answer && answer.isCorrect) score += 1;
+                }
+
+                if (question.type == "SHORT_ANSWER") {
+
+                }
+            }
+        }
+
+        // TODO: dapat usa ra ka session per quiz
+        const session = await trx.quizSession.create({
+            data: {
+                quizId: body.id,
+                studentId: body.studentId,
+                score
+            }
+        });
+
+        return session;
+    });
+
+    return res.status(200).json(sessionTransaction);
+}

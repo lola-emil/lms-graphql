@@ -28,4 +28,6 @@ router.post("/add-subject", asyncHandler(Controller.addSubject));
 
 router.post("/create-quiz", asyncHandler(Controller.createQuiz));
 
+router.post("/finish-quiz", asyncHandler(Controller.finishQuiz));
+
 export default router;

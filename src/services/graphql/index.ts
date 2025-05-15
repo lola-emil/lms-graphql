@@ -20,9 +20,11 @@ import { classSectionResolvers, classSectionTypeDefs } from "./resolvers/class-s
 
 import { calendarEventResolvers, calendarEventTypeDefs } from "./resolvers/calendar-event.resolver";
 
-import {assignmentFeedbackDefs, assignmentFeedbackResolvers} from "./resolvers/assignment-feedback.resolver";
+import { assignmentFeedbackDefs, assignmentFeedbackResolvers } from "./resolvers/assignment-feedback.resolver";
 
-import {subjectMaterialAttachmentDefs, subjectMaterialAttachmentResolvers} from "./resolvers/subject-material-attachment.resolver";
+import { subjectMaterialAttachmentDefs, subjectMaterialAttachmentResolvers } from "./resolvers/subject-material-attachment.resolver";
+
+import { quizSessionResolvers, quizSessionTypeDef } from "./resolvers/quiz-session.resolver";
 
 const typeDefs = mergeTypeDefs([
   gql`
@@ -39,6 +41,8 @@ const typeDefs = mergeTypeDefs([
   assignmentAttachmentTypeDefs,
   assignmentSubmissionTypeDefs,
   questionTypeDef,
+
+  quizSessionTypeDef,
 
   classLevelTypeDefs,
   classSectionTypeDefs,
@@ -62,7 +66,8 @@ const resolvers = mergeResolvers([
   classSectionResolvers,
   calendarEventResolvers,
   assignmentFeedbackResolvers,
-  subjectMaterialAttachmentResolvers
+  subjectMaterialAttachmentResolvers,
+  quizSessionResolvers,
 ]);
 
 

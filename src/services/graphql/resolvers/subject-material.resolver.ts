@@ -27,12 +27,15 @@ export const subjectMaterialTypeDefs = gql`
         attachments: [SubjectMaterialAttachment]
 
         questions: [Question]
+
+        quizSessions: [QuizSession!]
     }
 
     type Query {
         subjectMaterials: [SubjectMaterial!]!,
         subjectMaterial(id: Int!): SubjectMaterial,
         quizzes: [SubjectMaterial]
+        quiz(id: Int!): SubjectMaterial
     }
 
     type Mutation {
@@ -51,6 +54,9 @@ export const subjectMaterialResolvers = {
         },
         questions: (parent: any) => {
             return prisma.question.findMany({ where: { subjectMaterialId: parent.id } });
+        },
+        quizSessions: (parent: any) => {
+            return prisma.quizSession.findMany({ where: { quizId: parent.id } });
         }
     },
     Query: {
@@ -60,7 +66,10 @@ export const subjectMaterialResolvers = {
             }
         }),
         subjectMaterial: async (_: any, args: { id: number; }) => await prisma.subjectMaterial.findUnique({ where: { id: args.id }, include: { subject: true } }),
-        quizzes: async (parent: any) => await prisma.subjectMaterial.findMany({ where: { materialType: "QUIZ" } })
+        quizzes: async (parent: any) => await prisma.subjectMaterial.findMany({ where: { materialType: "QUIZ" } }),
+        quiz: async (_: any, args: { id: number; }) => {
+            return await prisma.subjectMaterial.findUnique({ where: { id: args.id } });
+        }
     },
     Mutation: {
         createMaterial

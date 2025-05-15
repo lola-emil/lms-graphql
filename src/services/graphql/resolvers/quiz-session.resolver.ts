@@ -1,14 +1,17 @@
 import { PrismaClient } from "@prisma/client";
 import gql from "graphql-tag";
+import { number } from "joi";
 
 
 const prisma = new PrismaClient();
 
-const quizSessionTypeDef = gql`
+export const quizSessionTypeDef = gql`
     type QuizSession {
         id: Int!
         studentId: Int!
         quizId: Int!
+
+        score: Float
 
         createdAt: String
         
@@ -20,10 +23,10 @@ const quizSessionTypeDef = gql`
         id: Int!
         sessionId: Int!
         answerText: String
-        choiceId: Int
+        answerId: Int
 
         session: QuizSession
-        choice: Choice
+        answer: Answer
     }
 
     input SessionAnswer {
@@ -35,10 +38,10 @@ const quizSessionTypeDef = gql`
 
     type Query {
         quizSessions: [QuizSession!]
-        quizSession: QuizSession
+        quizSession(id: Int!): QuizSession
 
-        quizSessionAnswers: [QuizSessionAnswer!]
-        quizSessionAnswer: QuizSessionAnswer
+        quizSessionAnswers(sessionId: Int!): [QuizSessionAnswer!]
+        quizSessionAnswer(id: Int!): QuizSessionAnswer
     }
 
     type Mutation {
@@ -50,10 +53,12 @@ const quizSessionTypeDef = gql`
 export const quizSessionResolvers = {
     Query: {
         quizSessions: () => prisma.quizSession.findMany(),
+        quizSession: (_: any, args: { id: number; }) => prisma.quizSession.findUnique({ where: { id: args.id } }),
+        quizSessionAnswers: (_: any, args: { sessionId: number; }) => prisma.quizSessionAnswer.findMany({ where: { sessionId: args.sessionId } }),
+        quizSessionAnswer: (_: any, args: { id: number; }) => prisma.quizSessionAnswer.findUnique({ where: { id: args.id } })
     },
     Mutation: {
         createSession: () => {
-            
         }
     }
-}
+};

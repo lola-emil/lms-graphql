@@ -81,7 +81,7 @@ model Assignment {
 
     dueDate DateTime?
 
-    hps Decimal?
+    hps Decimal? @db.Decimal(10, 2)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -263,6 +263,8 @@ model QuizSession {
     studentId Int
     quizId    Int
 
+    score Decimal? @db.Decimal(10, 2)
+
     createdAt DateTime @default(now())
 
     student           User                @relation(fields: [studentId], references: [id])
@@ -274,10 +276,10 @@ model QuizSessionAnswer {
     id         Int     @id @default(autoincrement())
     sessionId  Int
     answerText String?
-    choiceId   Int?
+    answerId   Int?
 
     session QuizSession @relation(fields: [sessionId], references: [id])
-    choice  Answer?     @relation(fields: [choiceId], references: [id])
+    choice  Answer?     @relation(fields: [answerId], references: [id])
 }
 
 model MeetingSession {
