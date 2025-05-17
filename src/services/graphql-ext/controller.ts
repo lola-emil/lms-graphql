@@ -1,6 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { PORT } from "../../config/constants";
+import { mailPasswordConfirmation } from "../../util/mailer";
+import { ErrorResponse } from "../../util/response";
+import argon from "argon2";
 
 type Body = {
     comment: string;
@@ -225,4 +228,115 @@ export async function finishQuiz(req: Request, res: Response) {
     });
 
     return res.status(200).json(sessionTransaction);
+}
+
+export async function requestUserUpdate(req: Request, res: Response) {
+    const body = req.body as {
+        firstname?: string;
+        middlename?: string;
+        lastname?: string;
+        email?: string;
+        password?: string;
+
+        userId: number;
+    };
+
+    const prisma = new PrismaClient();
+
+    const expiryInMinute = 5;
+
+    const matchedUser = await prisma.user.findUnique({ where: { id: body.userId } });
+
+    if (!matchedUser)
+        throw new ErrorResponse(400, "", {
+            message: ""
+        });
+
+
+    const userUpdateRequest = await prisma.userUpdateRequest.create({
+        data: {
+            expiry: new Date(Date.now() + expiryInMinute * 50 * 1000),
+            code: Math.floor(100000 + Math.random() * 900000),
+            data: body,
+            userId: matchedUser.id
+        }
+    });
+
+
+    await mailPasswordConfirmation(matchedUser.email, {
+        expiry: expiryInMinute,
+        firstname: matchedUser?.firstname,
+        otpCode: userUpdateRequest.code
+    });
+
+    return res.status(200).json({
+        message: "OTP sent to email"
+    });
+}
+
+export async function confirmUserUpdate(req: Request, res: Response) {
+    const body = req.body as {
+        updateRequestId: number;
+    };
+
+    const prisma = new PrismaClient();
+
+    const matchedRequest = await prisma.userUpdateRequest.findUnique({ where: { id: body.updateRequestId } });
+
+    if (!matchedRequest)
+        throw new ErrorResponse(400, "", {
+            message: ""
+
+        });
+
+    if (!matchedRequest.active)
+        throw new ErrorResponse(400, "", {
+            message: "Code expired"
+        });
+
+    // Invalidate the update request
+    await prisma.userUpdateRequest.update({
+        data: {
+            active: false
+        },
+        where: {
+            id: matchedRequest.id
+        }
+    });
+
+    const data = matchedRequest.data as {
+        firstname?: string;
+        middlename?: string;
+        lastname?: string;
+        email?: string;
+        password?: string;
+
+        userId: number;
+    };
+
+    if (data.password)
+        data.password = await argon.hash(data.password);
+
+    // Update ang user
+    const user = await prisma.user.update({
+        data: {
+            firstname: data.firstname,
+            middlename: data.middlename,
+            lastname: data.lastname,
+            email: data.email,
+            password: data.password
+        },
+        where: {
+            id: data.userId
+        },
+        select: {
+            firstname: true,
+            middlename: true,
+            lastname: true,
+            email: true,
+            password: false
+        }
+    });
+
+    return res.status(200).json(user);
 }

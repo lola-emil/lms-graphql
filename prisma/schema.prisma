@@ -39,6 +39,7 @@ model User {
     CalendarEvents         CalendarEvent[]
     Notifications          Notifications[]
     AssignmentFeedback     AssignmentFeedback[]
+    UserUpdateRequest      UserUpdateRequest[]
 }
 
 model SchoolYear {
@@ -232,14 +233,14 @@ enum MaterialType {
 }
 
 model Question {
-    id                           Int                            @id @default(autoincrement())
-    questionText                 String
-    type                         QuestionType
-    subjectMaterialId            Int
-    subject                      SubjectMaterial                @relation(fields: [subjectMaterialId], references: [id])
-    answers                      Answer[]
-    createdAt                    DateTime                       @default(now())
-    updatedAt                    DateTime                       @updatedAt
+    id                Int             @id @default(autoincrement())
+    questionText      String
+    type              QuestionType
+    subjectMaterialId Int
+    subject           SubjectMaterial @relation(fields: [subjectMaterialId], references: [id])
+    answers           Answer[]
+    createdAt         DateTime        @default(now())
+    updatedAt         DateTime        @updatedAt
     // SubjectMaterialQuizQuestions SubjectMaterialQuizQuestions[]
 }
 
@@ -352,6 +353,24 @@ model Notifications {
     read  Boolean
 
     userId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id])
+}
+
+model UserUpdateRequest {
+    id Int @id @default(autoincrement())
+
+    data Json?
+
+    code   Int
+    userId Int
+
+    expiry DateTime
+
+    active Boolean @default(true)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

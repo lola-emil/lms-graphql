@@ -60,8 +60,28 @@ export async function mailCredentials(receiverAddress: string, data: Partial<{
 
     const result = template(data);
 
-    await sendMail(receiverAddress, {
+    return await sendMail(receiverAddress, {
         subject: "Credentials",
         html: result
+    });
+}
+
+
+export async function mailPasswordConfirmation(receiverAddress: string, data: Partial<{
+    firstname: string;
+    otpCode: number;
+    expiry: number; // pila ka minutes
+}>) {
+    const templateSrc = await readTemplate("password-reset.hbs");
+    const template = Handlebars.compile(templateSrc);
+
+    const result = await template({
+        ...data,
+        companyName: BUSINESS_NAME
+    });
+
+    return await sendMail(receiverAddress, {
+        html: result,
+        subject: "Change Password Request"
     });
 }

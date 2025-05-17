@@ -30,4 +30,7 @@ router.post("/create-quiz", asyncHandler(Controller.createQuiz));
 
 router.post("/finish-quiz", asyncHandler(Controller.finishQuiz));
 
+router.post("/request-user-update", asyncHandler(Controller.requestUserUpdate));
+router.post("/confirm-user-update", asyncHandler(Controller.confirmUserUpdate));
+
 export default router;

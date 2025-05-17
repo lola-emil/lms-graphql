@@ -1,7 +1,7 @@
 
 
 export default function generatePassword(length: number = 8): string {
-    let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghuklmnopqrstuvwxyz1234567890`!~@#$%^&*()_+-=~;:'.,/?";
+    let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghuklmnopqrstuvwxyz1234567890";
     let result = "";
 
     for (let i = 0; i < length; i++) {

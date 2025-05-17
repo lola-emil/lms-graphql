@@ -3,7 +3,7 @@ import { xlsx_to_csv } from "../../lib/doc_parser";
 import { mailCredentials, sendMail } from "../../util/mailer";
 
 import parser from "csvtojson";
-import generatePassword from "../../util/passwordGenerator";
+import generatePassword from "../../util/password-generator";
 import Joi from "joi";
 import { PrismaClient } from "@prisma/client";
 import Logger from "../../util/logger";
