@@ -5,6 +5,25 @@ import { mailPasswordConfirmation } from "../../util/mailer";
 import { ErrorResponse } from "../../util/response";
 import argon from "argon2";
 
+
+type QuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
+
+type Question = {
+    id: string;
+    questionText: string;
+    type: QuestionType;
+    answers: {
+        answerText: string;
+        correct: boolean;
+    }[];
+};
+
+type Subject = {
+    id: number;
+    title: string;
+};
+
+
 export async function submitAssignment(req: Request, res: Response) {
     const attachments = req.files;
     const prisma = new PrismaClient();
@@ -48,40 +67,6 @@ export async function submitAssignment(req: Request, res: Response) {
     });
 }
 
-export async function uploadSubjectMaterial(req: Request, res: Response) {
-    const attachments = req.files;
-    const body = req.body;
-
-    const prisma = new PrismaClient();
-
-    const materialTransaction = await prisma.$transaction(async (trx) => {
-        const material = await trx.subjectMaterial.create({
-            data: {
-                content: body.content,
-                title: body.title,
-                subjectId: parseInt(body.subjectId)
-            }
-        });
-
-        if ((<any>attachments)?.length > 0) {
-            await trx.subjectMaterialAttachments.createMany({
-                data: (<any>attachments).map((val: any) => ({
-                    fileURL: `localhost:${PORT}/public/uploads/${val.filename}`,
-                    subjectMaterialId: material.id
-                }))
-            });
-        }
-
-        return await trx.subjectMaterial.findUnique({
-            where: { id: material.id },
-            include: { SubjectMaterialAttachments: true }
-        });
-
-    });
-
-    return res.status(200).json(materialTransaction);
-}
-
 
 export async function addSubject(req: Request, res: Response) {
     const body = req.body as {
@@ -103,23 +88,6 @@ export async function addSubject(req: Request, res: Response) {
 
     return res.status(200).json(subject);
 }
-
-type QuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
-
-type Question = {
-    id: string;
-    questionText: string;
-    type: QuestionType;
-    answers: {
-        answerText: string;
-        correct: boolean;
-    }[];
-};
-
-type Subject = {
-    id: number;
-    title: string;
-};
 
 export async function createQuiz(req: Request, res: Response) {
     const body = req.body as {
@@ -343,4 +311,73 @@ export async function confirmUserUpdate(req: Request, res: Response) {
     });
 
     return res.status(200).json(user);
+}
+
+export async function uploadSubjectMaterial(req: Request, res: Response) {
+    const attachments = req.files;
+    const body = req.body;
+
+    const prisma = new PrismaClient();
+
+    const materialTransaction = await prisma.$transaction(async (trx) => {
+        const material = await trx.subjectMaterial.create({
+            data: {
+                content: body.content,
+                title: body.title,
+                subjectId: parseInt(body.subjectId)
+            }
+        });
+
+        if ((<any>attachments)?.length > 0) {
+            await trx.subjectMaterialAttachments.createMany({
+                data: (<any>attachments).map((val: any) => ({
+                    fileURL: `localhost:${PORT}/public/uploads/${val.filename}`,
+                    subjectMaterialId: material.id
+                }))
+            });
+        }
+
+        return await trx.subjectMaterial.findUnique({
+            where: { id: material.id },
+            include: { SubjectMaterialAttachments: true }
+        });
+
+    });
+
+    return res.status(200).json(materialTransaction);
+}
+
+export async function updateSubjectMaterial(req: Request, res: Response) {
+    const attachments = req.files;
+    const body = req.body;
+    const prisma = new PrismaClient();
+
+    const materialTransaction = await prisma.$transaction(async trx => {
+        const material = await trx.subjectMaterial.update({
+            data: {
+                title: body.title,
+                content: body.content,
+                subjectId: body.subjectId
+            },
+            where: {
+                id: body.subjectMaterialId,
+            }
+        });
+
+        if ((<any>attachments)?.length > 0) {
+            await trx.subjectMaterialAttachments.createMany({
+                data: (<any>attachments).map((val: any) => ({
+                    fileURL: `localhost:${PORT}/public/uploads/${val.filename}`,
+                    subjectMaterialId: material.id
+                }))
+            });
+        }
+
+        return await trx.subjectMaterial.findUnique({
+            where: { id: material.id },
+            include: { SubjectMaterialAttachments: true }
+        });
+    });
+
+    return res.status(200).json(materialTransaction);
 }
