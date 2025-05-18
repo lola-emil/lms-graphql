@@ -5,12 +5,6 @@ import { mailPasswordConfirmation } from "../../util/mailer";
 import { ErrorResponse } from "../../util/response";
 import argon from "argon2";
 
-type Body = {
-    comment: string;
-    studentId: number;
-    assignmentId: number;
-};
-
 export async function submitAssignment(req: Request, res: Response) {
     const attachments = req.files;
     const prisma = new PrismaClient();
@@ -270,27 +264,37 @@ export async function requestUserUpdate(req: Request, res: Response) {
     });
 
     return res.status(200).json({
-        message: "OTP sent to email"
+        id: userUpdateRequest.id,
+        message: `Confirmation code sent to ${matchedUser.email}`,
+        email: matchedUser.email,
+        expiry: userUpdateRequest.expiry
     });
 }
 
 export async function confirmUserUpdate(req: Request, res: Response) {
     const body = req.body as {
         updateRequestId: number;
+        code: number;
     };
 
     const prisma = new PrismaClient();
 
     const matchedRequest = await prisma.userUpdateRequest.findUnique({ where: { id: body.updateRequestId } });
 
+
     if (!matchedRequest)
-        throw new ErrorResponse(400, "", {
-            message: ""
+        throw new ErrorResponse(400, "Error confirmation", {
+            message: "Error confirmation"
 
         });
 
+    if (body.code != matchedRequest.code)
+        throw new ErrorResponse(400, "Incorrect code", {
+            message: "Incorrect code"
+        });
+
     if (!matchedRequest.active)
-        throw new ErrorResponse(400, "", {
+        throw new ErrorResponse(400, "Code expired", {
             message: "Code expired"
         });
 
