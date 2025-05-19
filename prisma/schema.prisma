@@ -40,6 +40,8 @@ model User {
     Notifications          Notifications[]
     AssignmentFeedback     AssignmentFeedback[]
     UserUpdateRequest      UserUpdateRequest[]
+    ForumDiscussion        ForumDiscussion[]
+    ForumComment           ForumComment[]
 }
 
 model SchoolYear {
@@ -70,6 +72,7 @@ model TeacherAssignedSubject {
     StudentEnrolledSubject StudentEnrolledSubject[]
     Assignment             Assignment[]
     MeetingSession         MeetingSession[]
+    ForumDiscussion        ForumDiscussion[]
 }
 
 model Assignment {
@@ -376,6 +379,42 @@ model UserUpdateRequest {
     updatedAt DateTime @updatedAt
 
     user User @relation(fields: [userId], references: [id])
+}
+
+model ForumDiscussion {
+    id               Int @id @default(autoincrement())
+    teacherSubjectId Int
+
+    title String?
+    query String? @db.LongText
+
+    createdById Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    createdBy      User                   @relation(fields: [createdById], references: [id])
+    teacherSubject TeacherAssignedSubject @relation(fields: [teacherSubjectId], references: [id])
+    
+    ForumComments  ForumComment[]
+}
+
+model ForumComment {
+    id                Int    @id @default(autoincrement())
+    commentText       String @db.LongText
+    createdById       Int
+    forumDiscussionId Int
+    parentCommentId   Int? // <-- for replies
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+    createdBy       User            @relation(fields: [createdById], references: [id])
+    forumDiscussion ForumDiscussion @relation(fields: [forumDiscussionId], references: [id])
+
+    parentComment ForumComment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
+    replies       ForumComment[] @relation("CommentReplies")
 }
 
 enum NotificationType {
