@@ -21,6 +21,8 @@ export const subjectTypDefs = gql`
 
         teacherAssignedSubjects: [TeacherAssignedSubject!]!
         subjectMaterials: [SubjectMaterial!]!
+
+        gradeLevel: ClassLevel
     }
 
     type Query {
@@ -43,7 +45,8 @@ export const subjectResolvers = {
         },
         subjectMaterials: async (parent: any) => {
             return await prisma.subjectMaterial.findMany({ where: { subjectId: parent.id } });
-        }
+        },
+        gradeLevel: async (parent: any) => prisma.classLevel.findUnique({ where: { id: parent.classLevelId } })
     },
     Query: {
         subjects: async (_: any, args: { offset: number, limit: number; }) => {

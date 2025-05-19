@@ -45,7 +45,9 @@ export const userTypeDefs = gql`
 
     type Query {
         users: [User!]!
-        user(id: Int): User 
+        user(id: Int): User
+        teachers: [User]
+        students: [User]
     }
 
     type Mutation {
@@ -59,7 +61,10 @@ export const userTypeDefs = gql`
 export const userResolvers = {
     Query: {
         users: () => prisma.user.findMany(),
-        user: (_: any, args: { id: number; }) => prisma.user.findUnique({ where: { id: args.id } })
+        user: (_: any, args: { id: number; }) => prisma.user.findUnique({ where: { id: args.id } }),
+        teachers: (_: any) => prisma.user.findMany({ where: { role: "TEACHER" } }),
+        students: (_: any) => prisma.user.findMany({ where: { role: "STUDENT" } }),
+
     },
 
     Mutation: {

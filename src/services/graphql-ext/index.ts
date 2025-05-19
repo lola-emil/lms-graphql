@@ -36,4 +36,9 @@ router.post("/update-lesson", asyncHandler(Controller.updateSubjectMaterial));
 
 router.post("/score-assignment", asyncHandler(Controller.scoreClasswork));
 
+router.post("/add-teacher-to-subject", asyncHandler(Controller.addTeacherToSubject));
+
+router.post("/enroll-student", asyncHandler(Controller.enrollStudent));
+router.post("/update-user", asyncHandler(Controller.updateUser));
+
 export default router;

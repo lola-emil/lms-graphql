@@ -401,3 +401,79 @@ export async function scoreClasswork(req: Request, res: Response) {
 
     return res.status(200).json(submission);
 }
+
+export async function addTeacherToSubject(req: Request, res: Response) {
+    const body = req.body as {
+        subjectId: number;
+        teacherId: number;
+    };
+
+    const prisma = new PrismaClient();
+
+    const teacherSubject = await prisma.teacherAssignedSubject.create({
+        data: {
+            subjectId: body.subjectId,
+            teacherId: body.teacherId,
+            schoolYearId: 1
+        }
+    });
+
+    return res.status(200).json(teacherSubject);
+}
+
+export async function enrollStudent(req: Request, res: Response) {
+    const body = req.body as {
+        studentId: number;
+        teacherSubjectId: number;
+    };
+
+    const prisma = new PrismaClient();
+
+    const enrollment = await prisma.studentEnrolledSubject.create({
+        data: {
+            studentId: body.studentId,
+            teacherSubjectId: body.teacherSubjectId
+        }
+    });
+
+    return res.status(200).json(enrollment);
+}
+
+export async function updateUser(req: Request, res: Response) {
+    let {
+        id,
+        email,
+        firstname,
+        middlename,
+        lastname,
+        password
+    } = req.body as Partial<{
+        id: number;
+        email: string;
+        firstname: string;
+        middlename: string;
+        lastname: string;
+        password: string;
+    }>;
+
+
+    const prisma = new PrismaClient();
+
+    if (password)
+        password = await argon.hash(password);
+
+    const user = await prisma.user.update({
+        data: {
+            email,
+            firstname,
+            middlename,
+            lastname,
+            password: password ?? undefined
+        }, where: {
+            id: id
+        }
+    });
+
+
+    return res.status(200).json(user);
+}
