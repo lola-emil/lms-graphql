@@ -112,6 +112,8 @@ model AssignmentSubmission {
     assignmentId Int
     studentId    Int
 
+    score Decimal? @db.Decimal(10, 2)
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
@@ -395,8 +397,8 @@ model ForumDiscussion {
 
     createdBy      User                   @relation(fields: [createdById], references: [id])
     teacherSubject TeacherAssignedSubject @relation(fields: [teacherSubjectId], references: [id])
-    
-    ForumComments  ForumComment[]
+
+    ForumComments ForumComment[]
 }
 
 model ForumComment {

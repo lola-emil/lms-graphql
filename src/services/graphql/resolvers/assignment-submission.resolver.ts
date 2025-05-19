@@ -14,11 +14,15 @@ export const assignmentSubmissionTypeDefs = gql`
         assignmentId: Int!
         studentId: Int!
 
+        score: Float
+
         createdAt: String
         updatedAt: String
 
         assignment: Assignment!
         student: User!
+
+        attachments: [AssignmentSubmissionAttachment]
 
         feedback: [AssignmentFeedback]
     }
@@ -32,7 +36,7 @@ export const assignmentSubmissionTypeDefs = gql`
     }
 
     type Query {
-        assignmentSubmissions: [AssignmentSubmission!]!
+        assignmentSubmissions(assignmentId: Int!): [AssignmentSubmission!]!
         studentAssignmentSubmissions(studentId: Int!): [AssignmentSubmission]
         assignmentSubmission(id: Int!): AssignmentSubmission
         assignmentSubmissionAttachments(submissionId: Int!): [AssignmentSubmissionAttachment!]!
@@ -69,12 +73,13 @@ export const assignmentSubmissionResolvers = {
         assignment: (parent: any) => prisma.assignment.findUnique({ where: { id: parent.assignmentId } }),
         student: (parent: any) => prisma.user.findUnique({ where: { id: parent.studentId } }),
         feedback: async (parent: any) => {
-            const result = await prisma.assignmentFeedback.findMany({ where: { studentSubmissionId: parent.id } })
-            return result
-        }
+            const result = await prisma.assignmentFeedback.findMany({ where: { studentSubmissionId: parent.id } });
+            return result;
+        },
+        attachments: (parent: any) => prisma.assignmentSubmissionAttachment.findMany({ where: { assignmentSubmissionId: parent.id } })
     },
     Query: {
-        assignmentSubmissions: () => prisma.assignmentSubmission.findMany(),
+        assignmentSubmissions: (_: any, args: { assignmentId: number; }) => prisma.assignmentSubmission.findMany({ where: { assignmentId: args.assignmentId } }),
         studentAssignmentSubmissions: (_: any, args: { studentId: number; }) => {
             return prisma.assignmentSubmission.findMany({ where: { studentId: args.studentId } });
         },
@@ -113,4 +118,4 @@ export const assignmentSubmissionResolvers = {
             return await prisma.assignmentSubmissionAttachment.create({ data: args });
         }
     }
-};
+};  

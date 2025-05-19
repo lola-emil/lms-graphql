@@ -381,3 +381,23 @@ export async function updateSubjectMaterial(req: Request, res: Response) {
 
     return res.status(200).json(materialTransaction);
 }
+
+export async function scoreClasswork(req: Request, res: Response) {
+    const body = req.body as {
+        submissionId: number;
+        score: number;
+    };
+
+    const prisma = new PrismaClient();
+
+    const submission = await prisma.assignmentSubmission.update({
+        where: {
+            id: body.submissionId
+        },
+        data: {
+            score: body.score
+        }
+    });
+
+    return res.status(200).json(submission);
+}

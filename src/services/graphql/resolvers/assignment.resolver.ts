@@ -34,7 +34,7 @@ export const assignmentTypeDefs = gql`
 
     type Query {
         assignments(teacherSubjectId: Int!): [Assignment!]!,
-        assignment: Assignment!
+        assignment(id: Int!): Assignment!
     }
 
     type Mutation {
