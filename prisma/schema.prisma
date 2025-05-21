@@ -42,6 +42,7 @@ model User {
     UserUpdateRequest      UserUpdateRequest[]
     ForumDiscussion        ForumDiscussion[]
     ForumComment           ForumComment[]
+    StudentGrade           StudentGrade[]
 }
 
 model SchoolYear {
@@ -73,6 +74,7 @@ model TeacherAssignedSubject {
     Assignment             Assignment[]
     MeetingSession         MeetingSession[]
     ForumDiscussion        ForumDiscussion[]
+    StudentGrade           StudentGrade[]
 }
 
 model Assignment {
@@ -417,6 +419,32 @@ model ForumComment {
 
     parentComment ForumComment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
     replies       ForumComment[] @relation("CommentReplies")
+}
+
+enum GradeCategory {
+    QUIZ
+    ACTIVITY
+}
+
+model StudentGrade {
+    id Int @id @default(autoincrement())
+
+    title String?
+
+    studentId        Int
+    teacherSubjectId Int
+    category         GradeCategory
+
+    referenceId Int?
+
+    score Decimal @db.Decimal(11, 2)
+    hps   Decimal @db.Decimal(11, 2)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    student        User                   @relation(fields: [studentId], references: [id])
+    teacherSubject TeacherAssignedSubject @relation(fields: [teacherSubjectId], references: [id])
 }
 
 enum NotificationType {

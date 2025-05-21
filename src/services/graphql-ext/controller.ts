@@ -144,6 +144,7 @@ export async function finishQuiz(req: Request, res: Response) {
     const body = req.body as {
         id: number;
         studentId: number;
+        teacherSubjectId: number;
         answers: {
             id: number;
             answer: any;
@@ -152,9 +153,9 @@ export async function finishQuiz(req: Request, res: Response) {
     const prisma = new PrismaClient();
 
 
-
     const sessionTransaction = await prisma.$transaction(async trx => {
         let score = 0;
+
         for (let i = 0; i < body.answers.length; i++) {
             const userAnswer = body.answers[i];
             let question = await trx.question.findUnique({ where: { id: userAnswer.id } });
@@ -176,6 +177,23 @@ export async function finishQuiz(req: Request, res: Response) {
                 }
             }
         }
+
+        const quiz = await trx.subjectMaterial.findUnique({
+            where: { id: body.id }, include: {
+                Question: true
+            }
+        });
+
+        await trx.studentGrade.create({
+            data: {
+                title: quiz?.title,
+                studentId: body.studentId,
+                teacherSubjectId: body.teacherSubjectId,
+                category: "QUIZ",
+                score,
+                hps: quiz?.Question.length ?? 0
+            },
+        });
 
         // TODO: dapat usa ra ka session per quiz
         const session = await trx.quizSession.create({
@@ -390,16 +408,50 @@ export async function scoreClasswork(req: Request, res: Response) {
 
     const prisma = new PrismaClient();
 
-    const submission = await prisma.assignmentSubmission.update({
-        where: {
-            id: body.submissionId
-        },
-        data: {
-            score: body.score
-        }
+    const submissionTrans = await prisma.$transaction(async trx => {
+        const submission = await trx.assignmentSubmission.update({
+            where: {
+                id: body.submissionId
+            },
+            data: {
+                score: body.score
+            }
+        });
+
+        const assignment = await trx.assignment.findUnique({ where: { id: submission.assignmentId } });
+
+
+        const matchedStudentGrade = await trx.studentGrade.findMany({ where: { referenceId: body.submissionId } });
+
+
+        if (matchedStudentGrade.length == 0)
+            await trx.studentGrade.create({
+                data: {
+                    title: assignment?.title,
+                    studentId: submission.studentId,
+                    teacherSubjectId: assignment?.teacherAssignedSubjectId!,
+                    score: body.score,
+                    category: "ACTIVITY",
+                    hps: assignment?.hps ?? 0,
+                    referenceId: body.submissionId
+                }
+            });
+
+        else
+            await trx.studentGrade.update({
+                data: {
+                    score: body.score
+                },
+                where: {
+                    id: matchedStudentGrade[0].id
+                }
+            });
+
+        return submission;
     });
 
-    return res.status(200).json(submission);
+
+    return res.status(200).json(submissionTrans);
 }
 
 export async function addTeacherToSubject(req: Request, res: Response) {

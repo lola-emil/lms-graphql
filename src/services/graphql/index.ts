@@ -18,6 +18,7 @@ import { assignmentFeedbackDefs, assignmentFeedbackResolvers } from "./resolvers
 import { subjectMaterialAttachmentDefs, subjectMaterialAttachmentResolvers } from "./resolvers/subject-material-attachment.resolver";
 import { quizSessionResolvers, quizSessionTypeDef } from "./resolvers/quiz-session.resolver";
 import { forumResolvers, forumTypeDef } from "./resolvers/forum.resolver";
+import {studentGradeDefs, studentGradeResolver} from "./resolvers/student-grade.resolver";
 
 const typeDefs = mergeTypeDefs([
   gql`
@@ -36,6 +37,7 @@ const typeDefs = mergeTypeDefs([
   questionTypeDef,
   forumTypeDef,
   quizSessionTypeDef,
+  studentGradeDefs,
 
   classLevelTypeDefs,
   classSectionTypeDefs,
@@ -62,6 +64,7 @@ const resolvers = mergeResolvers([
   assignmentFeedbackResolvers,
   subjectMaterialAttachmentResolvers,
   quizSessionResolvers,
+  studentGradeResolver,
 ]);
 
 
