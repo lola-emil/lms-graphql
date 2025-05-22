@@ -41,4 +41,6 @@ router.post("/add-teacher-to-subject", asyncHandler(Controller.addTeacherToSubje
 router.post("/enroll-student", asyncHandler(Controller.enrollStudent));
 router.post("/update-user", asyncHandler(Controller.updateUser));
 
+router.get("/delete-meeting", asyncHandler(Controller.deleteMeeting));
+
 export default router;

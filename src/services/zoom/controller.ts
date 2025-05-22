@@ -32,7 +32,7 @@ export async function getOAuthToken(req: Request, res: Response) {
     const matchedSession = await prisma.meetingSession.findUnique({ where: { authCode: authCode } });
 
     if (!!matchedSession) {
-        return res.status(200).json(matchedSession);
+        return res.status(200).json({data: matchedSession});
     }
 
     try {
@@ -93,6 +93,7 @@ export async function getOAuthToken(req: Request, res: Response) {
                 authCode: authCode,
                 createdBy: body.teacher_id,
                 teacherAssignedSubjectId: body.teacher_assigned_subject_id,
+                onGoing: true
             },
             include: {
                 teacher: true,
@@ -232,7 +233,8 @@ export async function getLiveSession(req: Request, res: Response) {
 
     const result = await prisma.meetingSession.findMany({
         where: {
-            teacherAssignedSubjectId: parseInt(teacherSubjectId + "")
+            teacherAssignedSubjectId: parseInt(teacherSubjectId + ""),
+            onGoing: true
         },
     });
 

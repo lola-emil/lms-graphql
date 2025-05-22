@@ -38,7 +38,7 @@ export const studentGradeDefs = gql`
     type Query {
         studentGrades(studentId: Int!): [StudentGrade]
         gradePerSubject(teacherSubjectId: Int!): [StudentGrade]
-        gradeOverview(studentId: Int!): [GradeOverview]
+        gradeOverview(studentId: Int!): [StudentGrade]
     }
 `;
 
@@ -47,45 +47,24 @@ export const studentGradeResolver = {
         studentGrades: (_: any, args: { studentId: number; }) => prisma.studentGrade.findMany({ where: { studentId: args.studentId } }),
         gradePerSubject: (_: any, args: { teacherSubjectId: number; }) => prisma.studentGrade.findMany({ where: { teacherSubjectId: args.teacherSubjectId } }),
         gradeOverview: async (_: any, args: { studentId: number; }) => {
-            const sum = await prisma.studentGrade.groupBy({
-                by: ["teacherSubjectId", "category"],
+            // const sum = await prisma.studentGrade.groupBy({
+            //     by: ["teacherSubjectId", "category"],
+            //     where: {
+            //         studentId: args.studentId
+            //     },
+            //     _sum: {
+            //         score: true,
+            //         hps: true,
+            //     }
+            // });
+
+            const kuan = await prisma.studentGrade.findMany({
                 where: {
                     studentId: args.studentId
                 },
-                _sum: {
-                    score: true,
-                    hps: true,
-                }
             });
 
-            console.log(sum);
-
-            const result: {
-                hps: number;
-                score: number;
-                subject: string;
-            }[] = [];
-
-            for (let i = 0; i < sum.length; i++) {
-                let item = sum[i];
-
-                let matchedSubject = await prisma.teacherAssignedSubject.findUnique({
-                    where: {
-                        id: item.teacherSubjectId
-                    },
-                    include: {
-                        subject: true
-                    }
-                });
-
-                result.push({
-                    hps: item._sum.hps?.toNumber() ?? 0,
-                    score: item._sum.hps?.toNumber() ?? 0,
-                    subject: matchedSubject?.subject.title ?? ""
-                });
-            }
-
-            return result;
+            return kuan;
         }
     },
     StudentGrade: {

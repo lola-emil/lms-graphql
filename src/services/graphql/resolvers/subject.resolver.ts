@@ -28,6 +28,7 @@ export const subjectTypDefs = gql`
     type Query {
         subjects(offset: Int, limit: Int): [Subject!]!
         subject(id: Int!): Subject!
+        subjectPerLevel(classLevelId: Int!): [Subject]
     }
 
     scalar Upload
@@ -70,7 +71,10 @@ export const subjectResolvers = {
                     TeacherAssignedSubject: true,
                     SubjectMaterial: true
                 }
-            })
+            }),
+        subjectPerLevel: (_: any, args: { classLevelId: number; }) => prisma.subject.findMany({
+            where: { classLevelId: args.classLevelId }
+        })
     },
     Mutation: {
         createNewSubject,

@@ -529,3 +529,17 @@ export async function updateUser(req: Request, res: Response) {
 
     return res.status(200).json(user);
 }
+
+export async function deleteMeeting(req: Request, res: Response) {
+    const query = req.query;
+    const code = query.code + "";
+
+    const prisma = new PrismaClient();
+
+    const session = await prisma.meetingSession.update({
+        data: { onGoing: false },
+        where: { authCode: code }
+    });
+
+    return res.redirect(query.redirect_url + "");
+}
