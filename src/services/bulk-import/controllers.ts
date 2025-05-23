@@ -86,7 +86,7 @@ export async function bulkImportUsers(req: Request, res: Response) {
                     middlename,
                     lastname,
                     email,
-                    role: "STUDENT",
+                    role: req.body.role,
                     password: await argon.hash(password),
                 },
                 select: {

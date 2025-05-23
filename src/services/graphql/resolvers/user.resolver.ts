@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import gql from "graphql-tag";
 import argon from "argon2";
 import Joi from "joi";
@@ -41,13 +41,17 @@ export const userTypeDefs = gql`
 
         createdAt: String!
         updatedAt: String!
+
     }
 
     type Query {
-        users: [User!]!
+        users(offset: Int = 0, limit: Int = 10, role: Role, searchQuery: String): [User!]!
         user(id: Int): User
+        userByRole(role: Role): [User]
         teachers: [User]
         students: [User]
+        userCount(role: Role): Int
+        count(role: Role): Int
     }
 
     type Mutation {
@@ -59,12 +63,16 @@ export const userTypeDefs = gql`
 
 
 export const userResolvers = {
+    User: {
+    },
     Query: {
-        users: () => prisma.user.findMany(),
+        users,
         user: (_: any, args: { id: number; }) => prisma.user.findUnique({ where: { id: args.id } }),
         teachers: (_: any) => prisma.user.findMany({ where: { role: "TEACHER" } }),
         students: (_: any) => prisma.user.findMany({ where: { role: "STUDENT" } }),
-
+        userCount: (_: any, args: { role: Role; }) => prisma.user.count({ where: { role: args.role } }),
+        userByRole: (_: any, args: { role: Role; }) => prisma.user.findMany({ where: { role: args.role } }),
+        count: (_: any, args: { role: Role; }) => prisma.user.count({ where: { role: args.role ?? undefined } })
     },
 
     Mutation: {
@@ -81,6 +89,31 @@ const userBodySchema = Joi.object({
     password: Joi.string().alphanum().min(8),
     role: Joi.string().valid("STUDENT", "ADMIN", "TEACHER").required()
 });
+
+
+async function users(_: any, args: { offset: number, limit: number; role?: Role; searchQuery?: string; }) {
+    const {
+        offset,
+        limit
+    } = args;
+
+    return prisma.user.findMany({
+        skip: offset,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        where: {
+            ...(args.searchQuery ? {
+                OR: [
+                    { firstname: { contains: args.searchQuery, } },
+                    { middlename: { contains: args.searchQuery, } },
+                    { lastname: { contains: args.searchQuery, } },
+                    { email: { contains: args.searchQuery } },
+                ],
+            } : {}),
+            role: args.role ?? undefined
+        }
+    });
+}
 
 async function createUser(_: any, args: User) {
     args.middlename = args.middlename;

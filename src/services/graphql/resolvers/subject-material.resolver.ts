@@ -36,6 +36,7 @@ export const subjectMaterialTypeDefs = gql`
         subjectMaterial(id: Int!): SubjectMaterial,
         quizzes: [SubjectMaterial]
         quiz(id: Int!): SubjectMaterial
+        materialCount: Int
     }
 
     type Mutation {
@@ -69,7 +70,8 @@ export const subjectMaterialResolvers = {
         quizzes: async (parent: any) => await prisma.subjectMaterial.findMany({ where: { materialType: "QUIZ" } }),
         quiz: async (_: any, args: { id: number; }) => {
             return await prisma.subjectMaterial.findUnique({ where: { id: args.id } });
-        }
+        },
+        materialCount: (_: any) => prisma.subjectMaterial.count()
     },
     Mutation: {
         createMaterial
