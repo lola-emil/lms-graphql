@@ -13,4 +13,7 @@ crate-type = ["cdylib"]
 [dependencies]
 bytes = "1.9.0"
 neon = "1"
-shiva = { version = "1.4.9", features = ["csv", "xls", "xlsx", "pdf", "docx"] }
+neon-serde4 = "1.0.0"
+shiva = { version = "1.4.9", features = ["csv", "xls", "xlsx", "pdf", "docx", "serde", "serde_json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
