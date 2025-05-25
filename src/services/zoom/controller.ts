@@ -23,23 +23,40 @@ export async function authorize(req: Request, res: Response) {
 }
 
 export async function getOAuthToken(req: Request, res: Response) {
-    const authCode = req.query.code + "";
     const tokenUrl = "https://zoom.us/oauth/token";
     const prisma = new PrismaClient();
 
+
+
+    const body = req.body as {
+        code: string;
+        type: number;
+        start_time: string;
+        duration: number;
+        timezone: string;
+        agenda: string;
+        settings: {
+            join_before_host: boolean,
+            approval_type: number;
+        },
+        teacher_id: number;
+        teacher_assigned_subject_id: number;
+        redirect_uri: string;
+    };
+
     const basicAuth = Buffer.from(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`).toString("base64");
 
-    const matchedSession = await prisma.meetingSession.findUnique({ where: { authCode: authCode } });
+    const matchedSession = await prisma.meetingSession.findUnique({ where: { authCode: body.code } });
 
     if (!!matchedSession) {
-        return res.status(200).json({data: matchedSession});
+        return res.status(200).json({ data: matchedSession });
     }
 
     try {
         const paramObj = {
             grant_type: "authorization_code",
-            code: authCode,
-            redirect_uri: "http://localhost:4200/teacher/meeting"
+            code: body.code,
+            redirect_uri: body.redirect_uri
         };
 
         const params = new URLSearchParams((<any>paramObj));
@@ -51,23 +68,6 @@ export async function getOAuthToken(req: Request, res: Response) {
                     "Content-Type": "application/x-www-form-urlencoded"
                 }
             });
-
-
-        const body = {
-            "type": 2,
-            "start_time": "2025-05-05T10:00:00Z",
-            "duration": 30,
-            "timezone": "Asia/Manila",
-            "agenda": "Discuss project",
-            "settings": {
-                "join_before_host": true,
-                "approval_type": 0
-            },
-
-            "teacher_id": 3,
-            "teacher_assigned_subject_id": 1
-        };
-
 
 
         const uri = "https://api.zoom.us/v2/users/me/meetings";
@@ -90,7 +90,7 @@ export async function getOAuthToken(req: Request, res: Response) {
                 startURL: response.data.start_url,
                 topic: response.data.topic,
                 uuid: response.data.uuid,
-                authCode: authCode,
+                authCode: body.code,
                 createdBy: body.teacher_id,
                 teacherAssignedSubjectId: body.teacher_assigned_subject_id,
                 onGoing: true
@@ -103,23 +103,11 @@ export async function getOAuthToken(req: Request, res: Response) {
 
         return res.json({ data: result });
     } catch (error: any) {
+        console.log(error);
+        console.log(body);
         res.status(500).send("Token exchange failed");
     }
 }
-
-type MeetingBody = {
-    type: number;
-    start_time: string;
-    duration: number;
-    timezone: string;
-    agenda: string;
-    settings: {
-        join_before_host: boolean;
-        approval_type: number;
-    };
-    teacher_id: number;
-    teacher_assigned_subject_id: number;
-};
 
 
 // https://api.zoom.us/v2/users/me/meetings
@@ -175,11 +163,6 @@ export async function createMeeting(req: Request, res: Response) {
 
     return res.json({ data: result });
 }
-
-export async function joinMeeting(req: Request, res: Response) {
-
-}
-
 
 const coerceRequestBody = (body: any) => ({
     ...body,

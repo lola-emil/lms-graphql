@@ -6,7 +6,7 @@ const router = Router();
 
 router.get("/authorize", asyncHandler(Controller.authorize));
 
-router.get("/oauth/callback", asyncHandler(Controller.getOAuthToken));
+router.post("/oauth/callback", asyncHandler(Controller.getOAuthToken));
 
 router.get("/create-meeting", asyncHandler(Controller.createMeeting));
 router.post("/join-meeting/:id", asyncHandler(Controller.createMeeting));

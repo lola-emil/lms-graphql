@@ -8,7 +8,7 @@
   "private": true,
   "scripts": {
     "build": "tsc -p .",
-    "start": "concurrently \"yarn run build -w\" \"yarn run gql:cpx\" \"nodemon .\""
+    "start": "concurrently \"yarn run build -w\" \"nodemon .\""
   },
   "devDependencies": {
     "@types/busboy": "^1.5.4",
@@ -23,7 +23,6 @@
     "@types/object-path": "^0.11.4",
     "@types/supertest": "^6.0.3",
     "concurrently": "^9.1.2",
-    "cpx": "^1.5.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.10",
     "prisma": "^6.8.2",

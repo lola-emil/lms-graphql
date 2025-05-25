@@ -19,6 +19,8 @@ export const teacherSubjectTypeDef = gql`
         subject: Subject!
         schoolYear: SchoolYear!
         studentEnrolledSubjects: [StudentEnrolledSubject!]!
+
+        assignments: [Assignment]
     }
 
     type Query {
@@ -37,7 +39,8 @@ export const teacherSubjectResolvers = {
         subject: (parent: any) => prisma.subject.findUnique({ where: { id: parent.subjectId } }),
         studentEnrolledSubjects,
         schoolYear,
-        teacher: (parent: any) => prisma.user.findUnique({ where: { id: parent.teacherId } })
+        teacher: (parent: any) => prisma.user.findUnique({ where: { id: parent.teacherId } }),
+        assignments: (parent: any) => prisma.assignment.findMany({ where: { teacherAssignedSubjectId: parent.id } })
     },
     Query: {
         teacherAssignedSubjects: () => prisma.teacherAssignedSubject.findMany({ include: { subject: true, teacher: true } }),

@@ -53,6 +53,13 @@ export async function submitAssignment(req: Request, res: Response) {
             });
         }
 
+        await trx.activityLog.create({
+            data: {
+                userId: parseInt(body.studentId),
+                text: `Submitted assignment ${assignment?.title ?? 'untitled'}`
+            }
+        })
+
         return await trx.assignmentSubmission.findUnique({
             where: { id: submission.id },
             include: { AssignmentSubmissionAttachment: true }
@@ -204,6 +211,13 @@ export async function finishQuiz(req: Request, res: Response) {
             }
         });
 
+        await trx.activityLog.create({
+            data: {
+                userId: body.studentId,
+                text: `Completed Quiz ${quiz?.title}`
+            }
+        });
+
         return session;
     });
 
@@ -327,6 +341,13 @@ export async function confirmUserUpdate(req: Request, res: Response) {
             password: false
         }
     });
+
+    await prisma.activityLog.create({
+        data: {
+            userId: data.userId,
+            text: `User profile updated: ${user.firstname} ${user.lastname}`
+        }
+    })
 
     return res.status(200).json(user);
 }
@@ -498,7 +519,8 @@ export async function updateUser(req: Request, res: Response) {
         firstname,
         middlename,
         lastname,
-        password
+        password,
+        updatedById
     } = req.body as Partial<{
         id: number;
         email: string;
@@ -506,6 +528,7 @@ export async function updateUser(req: Request, res: Response) {
         middlename: string;
         lastname: string;
         password: string;
+        updatedById: number;
     }>;
 
 
@@ -526,6 +549,14 @@ export async function updateUser(req: Request, res: Response) {
         }
     });
 
+    // Add log
+    await prisma.activityLog.create({
+        data: {
+            userId: updatedById!,
+            text: `User profile updated: ${firstname} ${lastname}`
+        }
+    });
+
 
     return res.status(200).json(user);
 }
@@ -536,7 +567,7 @@ export async function deleteMeeting(req: Request, res: Response) {
 
     const prisma = new PrismaClient();
 
-    const session = await prisma.meetingSession.update({
+    await prisma.meetingSession.update({
         data: { onGoing: false },
         where: { authCode: code }
     });

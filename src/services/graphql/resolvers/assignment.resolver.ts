@@ -49,6 +49,7 @@ export const assignemtResolvers = {
         teacherAssignedSubject: (parent: any) => prisma.teacherAssignedSubject.findUnique({ where: { id: parent.teacherAssignedSubjectId } }),
         assignmentSubmissions: (parent: any) => prisma.assignmentSubmission.findMany({ where: { assignmentId: parent.id }, orderBy: { createdAt: "desc" } }),
         studentSubmissions: (parent: any, args: { studentId: number; }) => {
+            console.log("assignment", parent);
             return prisma.assignmentSubmission.findMany({ where: { studentId: args.studentId, assignmentId: parent.id } });
         }
     },

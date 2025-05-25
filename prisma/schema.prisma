@@ -43,6 +43,7 @@ model User {
     ForumDiscussion        ForumDiscussion[]
     ForumComment           ForumComment[]
     StudentGrade           StudentGrade[]
+    ActivityLog            ActivityLog[]
 }
 
 model SchoolYear {
@@ -445,6 +446,18 @@ model StudentGrade {
 
     student        User                   @relation(fields: [studentId], references: [id])
     teacherSubject TeacherAssignedSubject @relation(fields: [teacherSubjectId], references: [id])
+}
+
+model ActivityLog {
+    id   Int    @id @default(autoincrement())
+    text String
+
+    userId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id])
 }
 
 enum NotificationType {
