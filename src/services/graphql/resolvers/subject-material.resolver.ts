@@ -14,7 +14,7 @@ export const subjectMaterialTypeDefs = gql`
     type SubjectMaterial {
         id: Int!
         title: String
-        subjectId: Int!
+        teacherSubjectId: Int!
 
         materialType: MaterialType
 
@@ -22,7 +22,7 @@ export const subjectMaterialTypeDefs = gql`
         createdAt: String!
         updatedAt: String!
 
-        subject: Subject!
+        teacherSubject: TeacherAssignedSubject!
 
         attachments: [SubjectMaterialAttachment]
 
@@ -47,8 +47,8 @@ export const subjectMaterialTypeDefs = gql`
 
 export const subjectMaterialResolvers = {
     SubjectMaterial: {
-        subject: async (parent: any) => {
-            return await prisma.subject.findUnique({ where: { id: parent.subjectId } });
+        teacherSubject: async (parent: any) => {
+            return await prisma.teacherAssignedSubject.findUnique({ where: { id: parent.teacherSubjectId } });
         },
         attachments: (parent: any) => {
             return prisma.subjectMaterialAttachments.findMany({ where: { subjectMaterialId: parent.id } });
@@ -61,12 +61,12 @@ export const subjectMaterialResolvers = {
         }
     },
     Query: {
-        subjectMaterials: async () => await prisma.subjectMaterial.findMany({
-            include: {
-                subject: true
+        subjectMaterials: async () => await prisma.subjectMaterial.findMany(),
+        subjectMaterial: async (_: any, args: { id: number; }) => await prisma.subjectMaterial.findUnique({
+            where: {
+                id: args.id
             }
         }),
-        subjectMaterial: async (_: any, args: { id: number; }) => await prisma.subjectMaterial.findUnique({ where: { id: args.id }, include: { subject: true } }),
         quizzes: async (parent: any) => await prisma.subjectMaterial.findMany({ where: { materialType: "QUIZ" } }),
         quiz: async (_: any, args: { id: number; }) => {
             return await prisma.subjectMaterial.findUnique({ where: { id: args.id } });
@@ -80,7 +80,7 @@ export const subjectMaterialResolvers = {
 
 type Args = {
     title: string;
-    subjectId: number;
+    teacherSubjectId: number;
 };
 
 

@@ -76,6 +76,7 @@ model TeacherAssignedSubject {
     MeetingSession         MeetingSession[]
     ForumDiscussion        ForumDiscussion[]
     StudentGrade           StudentGrade[]
+    SubjectMaterial        SubjectMaterial[]
 }
 
 model Assignment {
@@ -162,7 +163,7 @@ model StudentProgress {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    SubjectMaterial SubjectMaterial @relation(fields: [subjectMaterialId], references: [id])
+    SubjectMaterial SubjectMaterial @relation(fields: [subjectMaterialId], references: [id], onDelete: Cascade)
     Student         User            @relation(fields: [studentId], references: [id])
 }
 
@@ -201,7 +202,7 @@ model SubjectMaterial {
     id    Int     @id @default(autoincrement())
     title String?
 
-    subjectId Int
+    teacherSubjectId Int
 
     materialType MaterialType?
 
@@ -210,12 +211,15 @@ model SubjectMaterial {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    subject                      Subject                        @relation(fields: [subjectId], references: [id])
+    teacherSubject               TeacherAssignedSubject         @relation(fields: [teacherSubjectId], references: [id])
     StudentProgress              StudentProgress[]
     SubjectMaterialQuizQuestions SubjectMaterialQuizQuestions[]
     QuizSession                  QuizSession[]
     SubjectMaterialAttachments   SubjectMaterialAttachments[]
     Question                     Question[]
+    Subject                      Subject?                       @relation(fields: [subjectId], references: [id])
+    subjectId                    Int?
+    subjectMaterialId            Int?
 }
 
 model SubjectMaterialAttachments {
@@ -224,13 +228,13 @@ model SubjectMaterialAttachments {
     fileURL           String
     subjectMaterialId Int
 
-    subjectMaterial SubjectMaterial @relation(fields: [subjectMaterialId], references: [id])
+    subjectMaterial SubjectMaterial @relation(fields: [subjectMaterialId], references: [id], onDelete: Cascade)
 }
 
 model SubjectMaterialQuizQuestions {
     id                Int             @id @default(autoincrement())
     subjectMaterialId Int
-    subjectMaterial   SubjectMaterial @relation(fields: [subjectMaterialId], references: [id])
+    subjectMaterial   SubjectMaterial @relation(fields: [subjectMaterialId], references: [id], onDelete: Cascade)
     questionId        Int
     // question          Question        @relation(fields: [questionId], references: [id])
 }
@@ -245,7 +249,7 @@ model Question {
     questionText      String
     type              QuestionType
     subjectMaterialId Int
-    subject           SubjectMaterial @relation(fields: [subjectMaterialId], references: [id])
+    subject           SubjectMaterial @relation(fields: [subjectMaterialId], references: [id], onDelete: Cascade)
     answers           Answer[]
     createdAt         DateTime        @default(now())
     updatedAt         DateTime        @updatedAt
@@ -263,7 +267,7 @@ model Answer {
     answerText         String
     isCorrect          Boolean             @default(false)
     questionId         Int
-    question           Question            @relation(fields: [questionId], references: [id])
+    question           Question            @relation(fields: [questionId], references: [id], onDelete: Cascade)
     QuizSessionAnswers QuizSessionAnswer[]
 }
 
@@ -277,7 +281,7 @@ model QuizSession {
     createdAt DateTime @default(now())
 
     student           User                @relation(fields: [studentId], references: [id])
-    quiz              SubjectMaterial     @relation(fields: [quizId], references: [id])
+    quiz              SubjectMaterial     @relation(fields: [quizId], references: [id], onDelete: Cascade)
     QuizSessionAnswer QuizSessionAnswer[]
 }
 

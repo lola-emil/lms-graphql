@@ -4,6 +4,7 @@ import { PORT } from "../../config/constants";
 import { mailPasswordConfirmation } from "../../util/mailer";
 import { ErrorResponse } from "../../util/response";
 import argon from "argon2";
+import Joi from "joi";
 
 
 type QuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
@@ -13,6 +14,7 @@ type Question = {
     questionText: string;
     type: QuestionType;
     answers: {
+        id: number;
         answerText: string;
         correct: boolean;
     }[];
@@ -58,7 +60,7 @@ export async function submitAssignment(req: Request, res: Response) {
                 userId: parseInt(body.studentId),
                 text: `Submitted assignment ${assignment?.title ?? 'untitled'}`
             }
-        })
+        });
 
         return await trx.assignmentSubmission.findUnique({
             where: { id: submission.id },
@@ -75,19 +77,52 @@ export async function submitAssignment(req: Request, res: Response) {
 }
 
 
+const subjectSchema = Joi.object({
+    title: Joi.string().required(),
+    gradeLevelId: Joi.required().messages({
+        'string.empty': '"Grade Level" cannot be empty.',
+        'any.required': '"Grade Level" is required.'
+    })
+});
+
 export async function addSubject(req: Request, res: Response) {
     const body = req.body as {
         title: string;
-        gradeLevelId: string;
+        gradeLevelId: string | number;
     };
-    const coverImg = req.files;
+
+    body.gradeLevelId = parseInt(body.gradeLevelId + ""); // bwersit
+
+    const { error } = subjectSchema.validate(body);
+
+    if (error)
+        return res.status(400).json(error.details);
+
 
     const prisma = new PrismaClient();
+    const matchedSubject = await prisma.subject.findMany({
+        where: {
+            title: body.title,
+            classLevelId: body.gradeLevelId
+        }
+    });
 
+    if (matchedSubject.length > 0)
+        return res.status(400).json([
+            {
+                message: "This subject already exist",
+                context: {
+                    label: "title",
+                    key: "title"
+                }
+            }
+        ] as Joi.ValidationErrorItem[]);
+
+    const coverImg = req.files;
     const subject = await prisma.subject.create({
         data: {
             title: body.title,
-            classLevelId: parseInt(body.gradeLevelId),
+            classLevelId: body.gradeLevelId,
             coverImgUrl: (<any>coverImg)?.length > 0 ? `localhost:${PORT}/public/uploads/${(<any>coverImg)[0].filename}`
                 : undefined
         }
@@ -98,7 +133,7 @@ export async function addSubject(req: Request, res: Response) {
 
 export async function createQuiz(req: Request, res: Response) {
     const body = req.body as {
-        subjectId: number;
+        teacherSubjectId: number;
         title: string;
         questions: Question[];
     };
@@ -112,7 +147,7 @@ export async function createQuiz(req: Request, res: Response) {
                 data: {
                     materialType: "QUIZ",
                     title: body.title,
-                    subjectId: body.subjectId
+                    teacherSubjectId: body.teacherSubjectId
                 }
             });
 
@@ -347,7 +382,7 @@ export async function confirmUserUpdate(req: Request, res: Response) {
             userId: data.userId,
             text: `User profile updated: ${user.firstname} ${user.lastname}`
         }
-    })
+    });
 
     return res.status(200).json(user);
 }
@@ -356,6 +391,8 @@ export async function uploadSubjectMaterial(req: Request, res: Response) {
     const attachments = req.files;
     const body = req.body;
 
+    console.log(body);
+
     const prisma = new PrismaClient();
 
     const materialTransaction = await prisma.$transaction(async (trx) => {
@@ -363,7 +400,8 @@ export async function uploadSubjectMaterial(req: Request, res: Response) {
             data: {
                 content: body.content,
                 title: body.title,
-                subjectId: parseInt(body.subjectId)
+                teacherSubjectId: parseInt(body.teacherSubjectId),
+                materialType: "MODULE"
             }
         });
 
@@ -573,4 +611,173 @@ export async function deleteMeeting(req: Request, res: Response) {
     });
 
     return res.redirect(query.redirect_url + "");
+}
+
+
+const userSchema = Joi.object({
+    firstname: Joi.string().required(),
+    middlename: Joi.string().optional().allow(null),
+    lastname: Joi.string().required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().min(6).required(),
+    role: Joi.string().valid('ADMIN', 'STUDENT', 'TEACHER').required()
+});
+
+
+
+export async function createUser(req: Request, res: Response) {
+    const body = req.body as {
+        firstname: string;
+        middlename?: string;
+        lastname: string;
+        email: string;
+        password: string;
+        role: "ADMIN" | "STUDENT" | "TEACHER";
+    };
+
+    const { error } = userSchema.validate(body, { abortEarly: false });
+
+    if (error)
+        return res.status(400).json(error.details);
+
+    const prisma = new PrismaClient();
+    const matchedUser = await prisma.user.findUnique({
+        where: {
+            email: body.email
+        }
+    });
+
+    if (matchedUser)
+        return res.status(400).json([
+            {
+                message: "Email already taken",
+                context: {
+                    label: "email",
+                    key: "email"
+                }
+            }
+        ] as Joi.ValidationErrorItem[]);
+
+    body.password = await argon.hash(body.password);
+    const user = await prisma.user.create({ data: body });
+
+    return res.status(200).json(user);
+}
+
+
+export async function deleteMaterial(req: Request, res: Response) {
+    const id = req.params.id;
+
+    const prisma = new PrismaClient();
+    const material = await prisma.subjectMaterial.delete({ where: { id: parseInt(id) } });
+
+    return res.status(200).json(material);
+}
+
+export async function editQuiz(req: Request, res: Response) {
+    const body = req.body as {
+        quizId: number;
+        title: string;
+        questions: Question[];
+    };
+    const prisma = new PrismaClient();
+    const matchedQuiz = await prisma.subjectMaterial.findUnique({ where: { id: body.quizId } });
+
+    console.log(matchedQuiz);
+
+    return res.status(200).json(body);
+}
+
+export async function editQuiz2(req: Request, res: Response) {
+    const { quizId, title, questions }: { quizId: number; title: string; questions: Question[] } = req.body;
+    const prisma = new PrismaClient();
+
+    try {
+        // Start a transaction to ensure atomic operations (all-or-nothing)
+        const result = await prisma.$transaction(async (tx) => {
+            // Step 1: Update the quiz title (in SubjectMaterial)
+            const quiz = await tx.subjectMaterial.update({
+                where: { id: quizId },
+                data: { title }, // Update the quiz title
+            });
+
+            // Step 2: Fetch the existing questions and answers related to this quiz
+            const existingQuestions = await tx.question.findMany({
+                where: { subjectMaterialId: quiz.id },
+                include: {
+                    answers: true, // Include the related answers
+                },
+            });
+
+            // Step 3: Handle questions and answers (add, update, delete)
+            for (const questionData of questions) {
+                // Step 3.1: Update or create the question
+                const question = await tx.question.upsert({
+                    where: { id: parseInt(questionData.id) }, // Match the question by id
+                    update: {
+                        questionText: questionData.questionText,
+                        type: questionData.type,
+                    },
+                    create: {
+                        questionText: questionData.questionText,
+                        type: questionData.type,
+                        subjectMaterialId: quiz.id,
+                    },
+                });
+
+                // Step 3.2: Handle answers (add, update, delete)
+                for (const answerData of questionData.answers) {
+                    await tx.answer.upsert({
+                        where: { id: typeof answerData.id == "string" ? -1 : answerData.id  }, // Use answer id if available
+                        update: {
+                            answerText: answerData.answerText,
+                            isCorrect: answerData.correct,
+                        },
+                        create: {
+                            answerText: answerData.answerText,
+                            isCorrect: answerData.correct,
+                            questionId: question.id,
+                        },
+                    });
+                }
+            }
+
+            // Step 4: Delete any existing questions or answers that are not present in the request body
+            // 4.1: Delete answers that are no longer present
+            for (const existingQuestion of existingQuestions) {
+                for (const existingAnswer of existingQuestion.answers) {
+                    const answerExists = questions.some((q) =>
+                        q.answers.some((a) => a.id === existingAnswer.id)
+                    );
+
+                    // If the answer is no longer in the request body, delete it
+                    if (!answerExists) {
+                        await tx.answer.delete({
+                            where: { id: existingAnswer.id },
+                        });
+                    }
+                }
+            }
+
+            // 4.2: Delete questions that are no longer present in the request body
+            for (const existingQuestion of existingQuestions) {
+                const questionExists = questions.some((q) => parseInt(q.id) === existingQuestion.id);
+
+                // If the question is no longer in the request body, delete it
+                if (!questionExists) {
+                    await tx.question.delete({
+                        where: { id: existingQuestion.id },
+                    });
+                }
+            }
+
+            return quiz; // Return the updated quiz as a response
+        });
+
+        // Send the updated quiz as a successful response
+        res.status(200).json({ message: 'Quiz updated successfully', quiz: result });
+    } catch (error) {
+        console.error('Error updating quiz:', error);
+        res.status(500).json({ message: 'Error updating quiz' });
+    }
 }

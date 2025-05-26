@@ -15,7 +15,7 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage });
+const upload = multer({ storage, limits: { fileSize: Infinity, fieldSize: Infinity } });
 
 
 const router = Router();
@@ -42,5 +42,11 @@ router.post("/enroll-student", asyncHandler(Controller.enrollStudent));
 router.post("/update-user", asyncHandler(Controller.updateUser));
 
 router.get("/delete-meeting", asyncHandler(Controller.deleteMeeting));
+
+router.post("/create-user", asyncHandler(Controller.createUser));
+
+router.delete("/delete-material/:id", asyncHandler(Controller.deleteMaterial));
+
+router.post("/edit-quiz", asyncHandler(Controller.editQuiz2));
 
 export default router;
