@@ -19,9 +19,6 @@ export const schoolYearTypeDefs = gql`
         schoolYear(id: Int): User
     }
 
-    type Mutation {
-        createSchoolYear(yearStart: Int!, yearEnd: Int!): SchoolYear!
-    }
 `;
 
 export const schoolYearResolvers = {
@@ -30,16 +27,5 @@ export const schoolYearResolvers = {
         schoolYear: (_: any, args: { id: number; }) => prisma.schoolYear.findUnique({ where: { id: args.id } })
     },
 
-    Mutation: {
-        createSchoolYear
-    }
-};
 
-type Args = {
-    yearStart: number,
-    yearEnd: number;
 };
-
-async function createSchoolYear(_: any, args: Args) {
-    return await prisma.schoolYear.create({ data: args });
-}

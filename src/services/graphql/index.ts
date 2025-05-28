@@ -3,7 +3,7 @@ import { gql } from "graphql-tag";
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { userResolvers, userTypeDefs } from "./resolvers/user.resolver";
 import { schoolYearResolvers, schoolYearTypeDefs } from "./resolvers/school-year.resolver";
-import { teacherSubjectResolvers, teacherSubjectTypeDef } from "./resolvers/teacher-assigned-subject.resolver";
+import { teacherSubjectResolvers as teacherAssignedSubjectResolvers, teacherSubjectTypeDef as teacherAssignedSubjectTypeDef } from "./resolvers/teacher-assigned-subject.resolver";
 import { subjectResolvers, subjectTypDefs } from "./resolvers/subject.resolver";
 import { studentEnrolledSubjectResolvers, studentEnrolledSubjectTypeDefs } from "./resolvers/student-enrolled-subject.resolver";
 import { subjectMaterialResolvers, subjectMaterialTypeDefs } from "./resolvers/subject-material.resolver";
@@ -18,16 +18,22 @@ import { assignmentFeedbackDefs, assignmentFeedbackResolvers } from "./resolvers
 import { subjectMaterialAttachmentDefs, subjectMaterialAttachmentResolvers } from "./resolvers/subject-material-attachment.resolver";
 import { quizSessionResolvers, quizSessionTypeDef } from "./resolvers/quiz-session.resolver";
 import { forumResolvers, forumTypeDef } from "./resolvers/forum.resolver";
-import {studentGradeDefs, studentGradeResolver} from "./resolvers/student-grade.resolver";
+import { studentGradeDefs, studentGradeResolver } from "./resolvers/student-grade.resolver";
+import { studentEnrolledSectionResolver, studentEnrolledSectionTypeDef } from "./resolvers/student-enrolled-section.resolver";
+import { teacherSubjectResolvers, teacherSubjectTypeDef } from "./resolvers/teacher-subject.resolver";
+import { teacherSubjectSectionResolver, teacherSubjectSectionTypeDefs } from "./resolvers/teacher-subject-section.resolver";
 
 const typeDefs = mergeTypeDefs([
   gql`
       type Query
       type Mutation
     `,
+  teacherSubjectTypeDef,
+  teacherSubjectSectionTypeDefs,
+  studentEnrolledSectionTypeDef,
   userTypeDefs,
   schoolYearTypeDefs,
-  teacherSubjectTypeDef,
+  teacherAssignedSubjectTypeDef,
   subjectTypDefs,
   studentEnrolledSubjectTypeDefs,
   subjectMaterialTypeDefs,
@@ -47,10 +53,11 @@ const typeDefs = mergeTypeDefs([
 ]);
 
 const resolvers = mergeResolvers([
+  studentEnrolledSectionResolver,
   userResolvers,
   forumResolvers,
   schoolYearResolvers,
-  teacherSubjectResolvers,
+  teacherAssignedSubjectResolvers,
   subjectResolvers,
   studentEnrolledSubjectResolvers,
   subjectMaterialResolvers,
@@ -65,6 +72,8 @@ const resolvers = mergeResolvers([
   subjectMaterialAttachmentResolvers,
   quizSessionResolvers,
   studentGradeResolver,
+  teacherSubjectResolvers,
+  teacherSubjectSectionResolver
 ]);
 
 

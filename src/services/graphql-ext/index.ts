@@ -49,4 +49,8 @@ router.delete("/delete-material/:id", asyncHandler(Controller.deleteMaterial));
 
 router.post("/edit-quiz", asyncHandler(Controller.editQuiz2));
 
+router.post("/add-section", asyncHandler(Controller.addSection));
+
+router.post("/add-school-year", asyncHandler(Controller.addSchoolYear));
+
 export default router;

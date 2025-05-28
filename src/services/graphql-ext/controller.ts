@@ -689,7 +689,7 @@ export async function editQuiz(req: Request, res: Response) {
 }
 
 export async function editQuiz2(req: Request, res: Response) {
-    const { quizId, title, questions }: { quizId: number; title: string; questions: Question[] } = req.body;
+    const { quizId, title, questions }: { quizId: number; title: string; questions: Question[]; } = req.body;
     const prisma = new PrismaClient();
 
     try {
@@ -728,7 +728,7 @@ export async function editQuiz2(req: Request, res: Response) {
                 // Step 3.2: Handle answers (add, update, delete)
                 for (const answerData of questionData.answers) {
                     await tx.answer.upsert({
-                        where: { id: typeof answerData.id == "string" ? -1 : answerData.id  }, // Use answer id if available
+                        where: { id: typeof answerData.id == "string" ? -1 : answerData.id }, // Use answer id if available
                         update: {
                             answerText: answerData.answerText,
                             isCorrect: answerData.correct,
@@ -780,4 +780,94 @@ export async function editQuiz2(req: Request, res: Response) {
         console.error('Error updating quiz:', error);
         res.status(500).json({ message: 'Error updating quiz' });
     }
+}
+
+const sectionSchema = Joi.object({
+    classLevelId: Joi.number().required(),
+    sectionName: Joi.string().required()
+});
+
+export async function addSection(req: Request, res: Response) {
+    const body = req.body as {
+        classLevelId: number;
+        sectionName: string;
+    };
+
+    const { error } = sectionSchema.validate(body, { abortEarly: false });
+
+    if (error)
+        return res.status(400).json(error.details);
+
+    const prisma = new PrismaClient();
+
+    const matchedSection = await prisma.classSection.findMany({
+        where: {
+            classLevelId: body.classLevelId,
+            sectionName: body.sectionName
+        }
+    });
+
+    // check if section already exists
+    if (matchedSection.length > 0)
+        return res.status(400).json([
+            {
+                message: "Section already exists",
+                context: {
+                    key: "sectionName",
+                    label: "sectionName"
+                }
+            }
+        ] as Joi.ValidationErrorItem[]);
+
+
+    const section = await prisma.classSection.create({
+        data: body
+    });
+
+    return res.status(200).json(section);
+}
+
+const schoolYearSchema = Joi.object({
+    yearStart: Joi.number().required(),
+    yearEnd: Joi.number().required(),
+    createdById: Joi.optional().allow(null)
+});
+
+export async function addSchoolYear(req: Request, res: Response) {
+    const body = req.body as {
+        createdById: number;
+        yearStart: number;
+        yearEnd: number;
+    };
+
+
+    const { error } = schoolYearSchema.validate(body, { abortEarly: false });
+
+    if (error)
+        return res.status(400).json(error.details);
+    const prisma = new PrismaClient();
+
+    const matchedSchoolYear = await prisma.schoolYear.findMany({
+        where: {
+            yearStart: body.yearStart,
+            yearEnd: body.yearEnd
+        }
+    });
+
+    if (matchedSchoolYear.length > 0)
+        return res.status(400).json([
+            {
+                message: "School year already exists.",
+                context: {
+                    key: "yearStart",
+                    label: "yearStart"
+                }
+            }
+        ] as Joi.ValidationErrorItem[]);
+
+    const schoolYear = await prisma.schoolYear.create({
+        data: body
+    });
+
+    return res.status(200).json(schoolYear);
 }

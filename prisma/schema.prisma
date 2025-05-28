@@ -2,6 +2,11 @@ generator client {
     provider = "prisma-client-js"
 }
 
+generator erd {
+    provider = "prisma-erd-generator"
+    output   = "erd.md"
+}
+
 datasource db {
     provider = "mysql"
     url      = env("DATABASE_URL")
@@ -24,7 +29,7 @@ model User {
 
     lrn String?
 
-    role Role?
+    role Role
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -44,6 +49,10 @@ model User {
     ForumComment           ForumComment[]
     StudentGrade           StudentGrade[]
     ActivityLog            ActivityLog[]
+    CreatedSchoolYear      SchoolYear[]             @relation(name: "CreatedByUser")
+    UpdatedSchoolYear      SchoolYear[]             @relation(name: "UpdatedByUser")
+    StudentEnrolledSection StudentEnrolledSection[]
+    TeacherSubject         TeacherSubject[]
 }
 
 model SchoolYear {
@@ -52,9 +61,20 @@ model SchoolYear {
     yearStart Int
     yearEnd   Int
 
-    createdAt              DateTime                 @default(now())
-    updatedAt              DateTime                 @updatedAt
+    isCurrent Boolean @default(false)
+
+    createdById Int
+    updatedById Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    createdBy User @relation(name: "CreatedByUser", fields: [createdById], references: [id])
+    updatedBy User? @relation(name: "UpdatedByUser", fields: [updatedById], references: [id])
+
     TeacherAssignedSubject TeacherAssignedSubject[]
+    StudentEnrolledSection StudentEnrolledSection[]
+    TeacherSubject         TeacherSubject[]
 }
 
 model TeacherAssignedSubject {
@@ -180,6 +200,53 @@ model StudentEnrolledSubject {
     teacherSubject TeacherAssignedSubject @relation(fields: [teacherSubjectId], references: [id])
 }
 
+model StudentEnrolledSection {
+    id Int @id @default(autoincrement())
+
+    studentId      Int
+    classSectionId Int
+
+    schoolYearId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    student      User         @relation(fields: [studentId], references: [id])
+    classSection ClassSection @relation(fields: [classSectionId], references: [id])
+    schoolYear   SchoolYear   @relation(fields: [schoolYearId], references: [id])
+}
+
+model TeacherSubject {
+    id Int @id @default(autoincrement())
+
+    subjectId Int
+    teacherId Int
+
+    schoolYearId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    subject               Subject                 @relation(fields: [subjectId], references: [id])
+    teacher               User                    @relation(fields: [teacherId], references: [id])
+    
+    schoolYear            SchoolYear              @relation(fields: [schoolYearId], references: [id])
+    TeacherSubjectSection TeacherSubjectSection[]
+}
+
+model TeacherSubjectSection {
+    id Int @id @default(autoincrement())
+
+    teacherSubjectId Int
+    classSectionId   Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    teacherSubject TeacherSubject @relation(fields: [teacherSubjectId], references: [id])
+    classSection        ClassSection   @relation(fields: [classSectionId], references: [id])
+}
+
 model Subject {
     id    Int    @id @default(autoincrement())
     title String
@@ -196,6 +263,7 @@ model Subject {
     classLevel ClassLevel @relation(fields: [classLevelId], references: [id])
 
     SubjectMaterial SubjectMaterial[]
+    TeacherSubject  TeacherSubject[]
 }
 
 model SubjectMaterial {
@@ -339,7 +407,9 @@ model ClassSection {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    classLevel ClassLevel @relation(fields: [classLevelId], references: [id])
+    classLevel             ClassLevel               @relation(fields: [classLevelId], references: [id])
+    StudentEnrolledSection StudentEnrolledSection[]
+    TeacherSubjectSection  TeacherSubjectSection[]
 }
 
 model CalendarEvent {
@@ -462,6 +532,16 @@ model ActivityLog {
     updatedAt DateTime @updatedAt
 
     user User @relation(fields: [userId], references: [id])
+}
+
+model Exam {
+    id    Int    @id @default(autoincrement())
+    title String
+
+    teacherSubjectId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 enum NotificationType {
