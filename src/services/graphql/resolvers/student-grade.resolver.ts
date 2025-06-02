@@ -9,6 +9,7 @@ export const studentGradeDefs = gql`
     enum GradeCategory {
         QUIZ
         ACTIVITY
+        EXAM
     }
 
     type StudentGrade {
@@ -26,7 +27,7 @@ export const studentGradeDefs = gql`
         updatedAt: String
 
         student: User
-        teacherSubject: TeacherAssignedSubject
+        teacherSubject: TeacherSubject
     }
 
     type GradeOverview {

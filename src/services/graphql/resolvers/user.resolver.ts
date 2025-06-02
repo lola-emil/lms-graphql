@@ -39,9 +39,11 @@ export const userTypeDefs = gql`
 
         role: Role!
 
+
         createdAt: String!
         updatedAt: String!
-
+        studentEnrolledSection(schoolYearId: Int!): [StudentEnrolledSection]
+        studentGrades(teacherSubjectId: Int!): [StudentGrade]
     }
 
     type Query {
@@ -64,6 +66,16 @@ export const userTypeDefs = gql`
 
 export const userResolvers = {
     User: {
+        studentEnrolledSection: (parent: any, args: { schoolYearId: number; }) =>
+            prisma.studentEnrolledSection.findMany({
+                where: {
+                    studentId: parent.id,
+                    schoolYearId: args.schoolYearId
+                }
+            }),
+        studentGrades: (parent: any, args: { teacherSubjectId: number; }) => {
+            return prisma.studentGrade.findMany({ where: { studentId: parent.id, teacherSubjectId: args.teacherSubjectId } });
+        }
     },
     Query: {
         users,
@@ -72,7 +84,7 @@ export const userResolvers = {
         students: (_: any) => prisma.user.findMany({ where: { role: "STUDENT" } }),
         userCount: (_: any, args: { role: Role; }) => prisma.user.count({ where: { role: args.role } }),
         userByRole: (_: any, args: { role: Role; }) => prisma.user.findMany({ where: { role: args.role } }),
-        count: (_: any, args: { role: Role; }) => prisma.user.count({ where: { role: args.role ?? undefined } })
+        count: (_: any, args: { role: Role; }) => prisma.user.count({ where: { role: args.role ?? undefined } }),
     },
 
     Mutation: {

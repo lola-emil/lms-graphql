@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, SchoolYear } from "@prisma/client";
 import gql from "graphql-tag";
 
 const prisma = new PrismaClient;
@@ -22,26 +22,72 @@ export const studentEnrolledSectionTypeDef = gql`
     }
 
     type Query {
-        studentEnrolledSections: [StudentEnrolledSection]
-        studentCurrentEnrolledSection(studentId: Int!, schoolYearId: Int!): [StudentEnrolledSection]
+        studentEnrolledSections(sectionId: Int!): [StudentEnrolledSection]
+        studentCurrentEnrolledSection(studentId: Int!, schoolYearId: Int): [StudentEnrolledSection],
+        unEnrolledStudents(schoolYearId: Int): [User]
     }
 
 `;
 
 export const studentEnrolledSectionResolver = {
+    StudentEnrolledSection: {
+        student: (parent: any) => prisma.user.findUnique({ where: { id: parent.studentId } }),
+        classSection: (parent: any) => prisma.classSection.findUnique({ where: { id: parent.classSectionId } })
+    },
     Query: {
         studentCurrentEnrolledSection,
-        studentEnrolledSections
+        studentEnrolledSections,
+        unEnrolledStudents
     }
 };
 
 
-async function studentEnrolledSections(_: any) {
-    return await prisma.studentEnrolledSection.findMany();
+async function studentEnrolledSections(_: any, args: { sectionId: number; }) {
+    return await prisma.studentEnrolledSection.findMany({
+        where: {
+            classSectionId: args.sectionId
+        }
+    });
 }
 
 
-async function studentCurrentEnrolledSection(_: any, args: { studentId: number, schoolYearId: number; }) {
-    const { schoolYearId, studentId } = args;
-    return await prisma.studentEnrolledSection.findMany({ where: { studentId, schoolYearId } });
+async function studentCurrentEnrolledSection(_: any, args: { studentId: number, schoolYearId?: number; }) {
+    let { schoolYearId, studentId } = args;
+
+    if (!schoolYearId)
+        schoolYearId = (await prisma.schoolYear.findMany({ where: { isCurrent: true } }))[0].id;
+    
+    return await prisma.studentEnrolledSection.findMany({ where: { studentId, schoolYearId: schoolYearId } });
+}
+
+async function unEnrolledStudents(_: any, args: { schoolYearId?: number; }) {
+    let schoolYear: SchoolYear | null;
+
+    if (args.schoolYearId) {
+        schoolYear = await prisma.schoolYear.findUnique({ where: { id: args.schoolYearId } });
+    } else {
+        schoolYear = (await prisma.schoolYear.findMany({ where: { isCurrent: true } }))[0];
+    }
+
+
+    const studentEnrollments = await prisma.studentEnrolledSection.findMany({
+        where: {
+            schoolYearId: schoolYear?.id
+        }
+    });
+
+    const enrolledStudentIds = studentEnrollments.map(val => val.studentId);
+
+    const students = await prisma.user.findMany({
+        where: {
+            role: "STUDENT",
+            NOT: {
+                id: {
+                    in: enrolledStudentIds
+                }
+            }
+        }
+    });
+
+    return students;
 }

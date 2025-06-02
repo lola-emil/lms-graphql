@@ -14,7 +14,7 @@ export const assignmentTypeDefs = gql`
         title: String!
         instructions: String
 
-        teacherAssignedSubjectId: Int!
+        teacherSubjectId: Int!
 
         dueDate: DateTime
 
@@ -23,7 +23,7 @@ export const assignmentTypeDefs = gql`
         createdAt: DateTime
         updatedAt: DateTime
 
-        teacherAssignedSubject: TeacherAssignedSubject!
+        teacherSubject: TeacherSubject!
         assignmentAttachments: [AssignmentAttachment!]!
 
 
@@ -38,7 +38,7 @@ export const assignmentTypeDefs = gql`
     }
 
     type Mutation {
-        createAssignment(title: String!, instructions: String, teacherAssignedSubjectId: Int!, hps: Float, dueDate: DateTime ): Assignment!
+        createAssignment(title: String!, instructions: String, teacherSubjectId: Int!, hps: Float, dueDate: DateTime ): Assignment!
     }
 `;
 
@@ -46,7 +46,7 @@ export const assignemtResolvers = {
     DateTime: DateTimeResolver,
     Assignment: {
         assignmentAttachments: (parent: any) => prisma.assignmentAttachment.findMany({ where: { assignmentId: parent.id } }),
-        teacherAssignedSubject: (parent: any) => prisma.teacherAssignedSubject.findUnique({ where: { id: parent.teacherAssignedSubjectId } }),
+        teacherSubject: (parent: any) => prisma.teacherSubject.findUnique({ where: { id: parent.teacherSubjectId } }),
         assignmentSubmissions: (parent: any) => prisma.assignmentSubmission.findMany({ where: { assignmentId: parent.id }, orderBy: { createdAt: "desc" } }),
         studentSubmissions: (parent: any, args: { studentId: number; }) => {
             console.log("assignment", parent);
@@ -56,7 +56,7 @@ export const assignemtResolvers = {
     Query: {
         assignments: (_: any, args: { teacherSubjectId: number; }) => prisma.assignment.findMany({
             where: {
-                teacherAssignedSubjectId: args.teacherSubjectId
+                teacherSubjectId: args.teacherSubjectId
             },
             orderBy: {
                 createdAt: "desc"
@@ -72,13 +72,13 @@ export const assignemtResolvers = {
 type Args = {
     title: string;
     instruction: string;
-    teacherAssignedSubjectId: number;
+    teacherSubjectId: number;
 };
 
 const assignmentSchema = Joi.object({
     title: Joi.string().required(),
     instructions: Joi.string().optional(),
-    teacherAssignedSubjectId: Joi.number().integer().required(),
+    teacherSubjectId: Joi.number().integer().required(),
     dueDate: Joi.date().iso().required(),
     hps: Joi.number().precision(2).optional(),
 });

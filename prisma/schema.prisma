@@ -62,6 +62,7 @@ model SchoolYear {
     yearEnd   Int
 
     isCurrent Boolean @default(false)
+    unlocked  Boolean @default(false)
 
     createdById Int
     updatedById Int?
@@ -69,7 +70,7 @@ model SchoolYear {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    createdBy User @relation(name: "CreatedByUser", fields: [createdById], references: [id])
+    createdBy User  @relation(name: "CreatedByUser", fields: [createdById], references: [id])
     updatedBy User? @relation(name: "UpdatedByUser", fields: [updatedById], references: [id])
 
     TeacherAssignedSubject TeacherAssignedSubject[]
@@ -105,7 +106,7 @@ model Assignment {
     title        String
     instructions String?
 
-    teacherAssignedSubjectId Int
+    teacherSubjectId Int
 
     dueDate DateTime?
 
@@ -114,9 +115,11 @@ model Assignment {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    teacherAssignedSubject TeacherAssignedSubject @relation(fields: [teacherAssignedSubjectId], references: [id])
-    AssignmentAttachment   AssignmentAttachment[]
-    AssignmentSubmission   AssignmentSubmission[]
+    teacherSubject           TeacherSubject          @relation(fields: [teacherSubjectId], references: [id])
+    AssignmentAttachment     AssignmentAttachment[]
+    AssignmentSubmission     AssignmentSubmission[]
+    TeacherAssignedSubject   TeacherAssignedSubject? @relation(fields: [teacherAssignedSubjectId], references: [id])
+    teacherAssignedSubjectId Int?
 }
 
 model AssignmentAttachment {
@@ -211,6 +214,8 @@ model StudentEnrolledSection {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    deletedAt DateTime?
+
     student      User         @relation(fields: [studentId], references: [id])
     classSection ClassSection @relation(fields: [classSectionId], references: [id])
     schoolYear   SchoolYear   @relation(fields: [schoolYearId], references: [id])
@@ -227,11 +232,16 @@ model TeacherSubject {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    subject               Subject                 @relation(fields: [subjectId], references: [id])
-    teacher               User                    @relation(fields: [teacherId], references: [id])
-    
+    subject Subject @relation(fields: [subjectId], references: [id])
+    teacher User    @relation(fields: [teacherId], references: [id])
+
     schoolYear            SchoolYear              @relation(fields: [schoolYearId], references: [id])
     TeacherSubjectSection TeacherSubjectSection[]
+    SubjectMaterial       SubjectMaterial[]
+    Assignment            Assignment[]
+    ForumDiscussion       ForumDiscussion[]
+    MeetingSession        MeetingSession[]
+    StudentGrade          StudentGrade[]
 }
 
 model TeacherSubjectSection {
@@ -244,7 +254,7 @@ model TeacherSubjectSection {
     updatedAt DateTime @updatedAt
 
     teacherSubject TeacherSubject @relation(fields: [teacherSubjectId], references: [id])
-    classSection        ClassSection   @relation(fields: [classSectionId], references: [id])
+    classSection   ClassSection   @relation(fields: [classSectionId], references: [id])
 }
 
 model Subject {
@@ -279,7 +289,7 @@ model SubjectMaterial {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    teacherSubject               TeacherAssignedSubject         @relation(fields: [teacherSubjectId], references: [id])
+    teacherSubject               TeacherSubject                 @relation(fields: [teacherSubjectId], references: [id])
     StudentProgress              StudentProgress[]
     SubjectMaterialQuizQuestions SubjectMaterialQuizQuestions[]
     QuizSession                  QuizSession[]
@@ -288,6 +298,8 @@ model SubjectMaterial {
     Subject                      Subject?                       @relation(fields: [subjectId], references: [id])
     subjectId                    Int?
     subjectMaterialId            Int?
+    TeacherAssignedSubject       TeacherAssignedSubject?        @relation(fields: [teacherAssignedSubjectId], references: [id])
+    teacherAssignedSubjectId     Int?
 }
 
 model SubjectMaterialAttachments {
@@ -310,6 +322,7 @@ model SubjectMaterialQuizQuestions {
 enum MaterialType {
     MODULE
     QUIZ
+    EXAM
 }
 
 model Question {
@@ -378,12 +391,14 @@ model MeetingSession {
 
     onGoing Boolean?
 
-    teacherAssignedSubjectId Int
+    teacherSubjectId Int
 
     createdBy Int
 
-    teacher        User                   @relation(fields: [createdBy], references: [id])
-    teacherSubject TeacherAssignedSubject @relation(fields: [teacherAssignedSubjectId], references: [id])
+    teacher                  User                    @relation(fields: [createdBy], references: [id])
+    teacherSubject           TeacherSubject          @relation(fields: [teacherSubjectId], references: [id])
+    TeacherAssignedSubject   TeacherAssignedSubject? @relation(fields: [teacherAssignedSubjectId], references: [id])
+    teacherAssignedSubjectId Int?
 }
 
 model ClassLevel {
@@ -472,10 +487,12 @@ model ForumDiscussion {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    createdBy      User                   @relation(fields: [createdById], references: [id])
-    teacherSubject TeacherAssignedSubject @relation(fields: [teacherSubjectId], references: [id])
+    createdBy      User           @relation(fields: [createdById], references: [id])
+    teacherSubject TeacherSubject @relation(fields: [teacherSubjectId], references: [id])
 
-    ForumComments ForumComment[]
+    ForumComments            ForumComment[]
+    TeacherAssignedSubject   TeacherAssignedSubject? @relation(fields: [teacherAssignedSubjectId], references: [id])
+    teacherAssignedSubjectId Int?
 }
 
 model ForumComment {
@@ -499,6 +516,7 @@ model ForumComment {
 enum GradeCategory {
     QUIZ
     ACTIVITY
+    EXAM
 }
 
 model StudentGrade {
@@ -518,8 +536,10 @@ model StudentGrade {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    student        User                   @relation(fields: [studentId], references: [id])
-    teacherSubject TeacherAssignedSubject @relation(fields: [teacherSubjectId], references: [id])
+    student                  User                    @relation(fields: [studentId], references: [id])
+    teacherSubject           TeacherSubject          @relation(fields: [teacherSubjectId], references: [id])
+    TeacherAssignedSubject   TeacherAssignedSubject? @relation(fields: [teacherAssignedSubjectId], references: [id])
+    teacherAssignedSubjectId Int?
 }
 
 model ActivityLog {
@@ -534,15 +554,6 @@ model ActivityLog {
     user User @relation(fields: [userId], references: [id])
 }
 
-model Exam {
-    id    Int    @id @default(autoincrement())
-    title String
-
-    teacherSubjectId Int
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-}
 
 enum NotificationType {
     INFO

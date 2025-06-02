@@ -12,6 +12,7 @@ TEACHER TEACHER
         MaterialType {
             MODULE MODULE
 QUIZ QUIZ
+EXAM EXAM
         }
     
 
@@ -27,6 +28,7 @@ SHORT_ANSWER SHORT_ANSWER
         GradeCategory {
             QUIZ QUIZ
 ACTIVITY ACTIVITY
+EXAM EXAM
         }
     
 
@@ -57,6 +59,7 @@ SUCCESS SUCCESS
     Int yearStart 
     Int yearEnd 
     Boolean isCurrent 
+    Boolean unlocked 
     DateTime createdAt 
     DateTime updatedAt 
     }
@@ -130,6 +133,7 @@ SUCCESS SUCCESS
     Int id "🗝️"
     DateTime createdAt 
     DateTime updatedAt 
+    DateTime deletedAt "❓"
     }
   
 
@@ -308,15 +312,6 @@ SUCCESS SUCCESS
     DateTime updatedAt 
     }
   
-
-  "Exam" {
-    Int id "🗝️"
-    String title 
-    Int teacherSubjectId 
-    DateTime createdAt 
-    DateTime updatedAt 
-    }
-  
     "User" o|--|| "Role" : "enum:role"
     "User" o{--}o "StudentEnrolledSubject" : "StudentEnrolledSubject"
     "User" o{--}o "TeacherAssignedSubject" : "TeacherAssignedSubject"
@@ -350,9 +345,10 @@ SUCCESS SUCCESS
     "TeacherAssignedSubject" o{--}o "ForumDiscussion" : "ForumDiscussion"
     "TeacherAssignedSubject" o{--}o "StudentGrade" : "StudentGrade"
     "TeacherAssignedSubject" o{--}o "SubjectMaterial" : "SubjectMaterial"
-    "Assignment" o|--|| "TeacherAssignedSubject" : "teacherAssignedSubject"
+    "Assignment" o|--|| "TeacherSubject" : "teacherSubject"
     "Assignment" o{--}o "AssignmentAttachment" : "AssignmentAttachment"
     "Assignment" o{--}o "AssignmentSubmission" : "AssignmentSubmission"
+    "Assignment" o|--|o "TeacherAssignedSubject" : "TeacherAssignedSubject"
     "AssignmentAttachment" o|--|| "Assignment" : "Assignment"
     "AssignmentSubmission" o|--|| "User" : "Student"
     "AssignmentSubmission" o|--|| "Assignment" : "Assignment"
@@ -372,6 +368,11 @@ SUCCESS SUCCESS
     "TeacherSubject" o|--|| "User" : "teacher"
     "TeacherSubject" o|--|| "SchoolYear" : "schoolYear"
     "TeacherSubject" o{--}o "TeacherSubjectSection" : "TeacherSubjectSection"
+    "TeacherSubject" o{--}o "SubjectMaterial" : "SubjectMaterial"
+    "TeacherSubject" o{--}o "Assignment" : "Assignment"
+    "TeacherSubject" o{--}o "ForumDiscussion" : "ForumDiscussion"
+    "TeacherSubject" o{--}o "MeetingSession" : "MeetingSession"
+    "TeacherSubject" o{--}o "StudentGrade" : "StudentGrade"
     "TeacherSubjectSection" o|--|| "TeacherSubject" : "teacherSubject"
     "TeacherSubjectSection" o|--|| "ClassSection" : "classSection"
     "Subject" o{--}o "TeacherAssignedSubject" : "TeacherAssignedSubject"
@@ -379,13 +380,14 @@ SUCCESS SUCCESS
     "Subject" o{--}o "SubjectMaterial" : "SubjectMaterial"
     "Subject" o{--}o "TeacherSubject" : "TeacherSubject"
     "SubjectMaterial" o|--|o "MaterialType" : "enum:materialType"
-    "SubjectMaterial" o|--|| "TeacherAssignedSubject" : "teacherSubject"
+    "SubjectMaterial" o|--|| "TeacherSubject" : "teacherSubject"
     "SubjectMaterial" o{--}o "StudentProgress" : "StudentProgress"
     "SubjectMaterial" o{--}o "SubjectMaterialQuizQuestions" : "SubjectMaterialQuizQuestions"
     "SubjectMaterial" o{--}o "QuizSession" : "QuizSession"
     "SubjectMaterial" o{--}o "SubjectMaterialAttachments" : "SubjectMaterialAttachments"
     "SubjectMaterial" o{--}o "Question" : "Question"
     "SubjectMaterial" o|--|o "Subject" : "Subject"
+    "SubjectMaterial" o|--|o "TeacherAssignedSubject" : "TeacherAssignedSubject"
     "SubjectMaterialAttachments" o|--|| "SubjectMaterial" : "subjectMaterial"
     "SubjectMaterialQuizQuestions" o|--|| "SubjectMaterial" : "subjectMaterial"
     "Question" o|--|| "QuestionType" : "enum:type"
@@ -399,7 +401,8 @@ SUCCESS SUCCESS
     "QuizSessionAnswer" o|--|| "QuizSession" : "session"
     "QuizSessionAnswer" o|--|o "Answer" : "choice"
     "MeetingSession" o|--|| "User" : "teacher"
-    "MeetingSession" o|--|| "TeacherAssignedSubject" : "teacherSubject"
+    "MeetingSession" o|--|| "TeacherSubject" : "teacherSubject"
+    "MeetingSession" o|--|o "TeacherAssignedSubject" : "TeacherAssignedSubject"
     "ClassLevel" o{--}o "ClassSection" : "ClassSection"
     "ClassLevel" o{--}o "Subject" : "Subject"
     "ClassSection" o|--|| "ClassLevel" : "classLevel"
@@ -410,14 +413,16 @@ SUCCESS SUCCESS
     "Notifications" o|--|| "User" : "user"
     "UserUpdateRequest" o|--|| "User" : "user"
     "ForumDiscussion" o|--|| "User" : "createdBy"
-    "ForumDiscussion" o|--|| "TeacherAssignedSubject" : "teacherSubject"
+    "ForumDiscussion" o|--|| "TeacherSubject" : "teacherSubject"
     "ForumDiscussion" o{--}o "ForumComment" : "ForumComments"
+    "ForumDiscussion" o|--|o "TeacherAssignedSubject" : "TeacherAssignedSubject"
     "ForumComment" o|--|| "User" : "createdBy"
     "ForumComment" o|--|| "ForumDiscussion" : "forumDiscussion"
     "ForumComment" o|--|o "ForumComment" : "parentComment"
     "ForumComment" o{--}o "ForumComment" : "replies"
     "StudentGrade" o|--|| "GradeCategory" : "enum:category"
     "StudentGrade" o|--|| "User" : "student"
-    "StudentGrade" o|--|| "TeacherAssignedSubject" : "teacherSubject"
+    "StudentGrade" o|--|| "TeacherSubject" : "teacherSubject"
+    "StudentGrade" o|--|o "TeacherAssignedSubject" : "TeacherAssignedSubject"
     "ActivityLog" o|--|| "User" : "user"
 ```

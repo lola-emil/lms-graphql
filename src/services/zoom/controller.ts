@@ -92,7 +92,7 @@ export async function getOAuthToken(req: Request, res: Response) {
                 uuid: response.data.uuid,
                 authCode: body.code,
                 createdBy: body.teacher_id,
-                teacherAssignedSubjectId: body.teacher_assigned_subject_id,
+                teacherSubjectId: body.teacher_assigned_subject_id,
                 onGoing: true
             },
             include: {
@@ -152,7 +152,7 @@ export async function createMeeting(req: Request, res: Response) {
             topic: response.data.topic,
             uuid: response.data.uuid,
             createdBy: body.teacher_id,
-            teacherAssignedSubjectId: body.teacher_assigned_subject_id,
+            teacherSubjectId: body.teacher_assigned_subject_id,
         },
         include: {
             teacher: true,

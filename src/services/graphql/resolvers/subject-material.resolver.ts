@@ -9,6 +9,7 @@ export const subjectMaterialTypeDefs = gql`
     enum MaterialType {
         MODULE
         QUIZ
+        EXAM
     }
     
     type SubjectMaterial {
@@ -22,7 +23,7 @@ export const subjectMaterialTypeDefs = gql`
         createdAt: String!
         updatedAt: String!
 
-        teacherSubject: TeacherAssignedSubject!
+        teacherSubject: TeacherSubject!
 
         attachments: [SubjectMaterialAttachment]
 
@@ -48,7 +49,7 @@ export const subjectMaterialTypeDefs = gql`
 export const subjectMaterialResolvers = {
     SubjectMaterial: {
         teacherSubject: async (parent: any) => {
-            return await prisma.teacherAssignedSubject.findUnique({ where: { id: parent.teacherSubjectId } });
+            return await prisma.teacherSubject.findUnique({ where: { id: parent.teacherSubjectId } });
         },
         attachments: (parent: any) => {
             return prisma.subjectMaterialAttachments.findMany({ where: { subjectMaterialId: parent.id } });

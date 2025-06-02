@@ -135,6 +135,7 @@ export async function createQuiz(req: Request, res: Response) {
     const body = req.body as {
         teacherSubjectId: number;
         title: string;
+        materialType: "QUIZ" | "EXAM"
         questions: Question[];
     };
 
@@ -145,7 +146,7 @@ export async function createQuiz(req: Request, res: Response) {
             // Create the quiz material
             const subjectMaterial = await trx.subjectMaterial.create({
                 data: {
-                    materialType: "QUIZ",
+                    materialType: body.materialType,
                     title: body.title,
                     teacherSubjectId: body.teacherSubjectId
                 }
@@ -231,7 +232,7 @@ export async function finishQuiz(req: Request, res: Response) {
                 title: quiz?.title,
                 studentId: body.studentId,
                 teacherSubjectId: body.teacherSubjectId,
-                category: "QUIZ",
+                category: quiz?.materialType as any,
                 score,
                 hps: quiz?.Question.length ?? 0
             },
@@ -479,6 +480,7 @@ export async function scoreClasswork(req: Request, res: Response) {
 
         const assignment = await trx.assignment.findUnique({ where: { id: submission.assignmentId } });
 
+        console.log("Katung assignment", assignment);
 
         const matchedStudentGrade = await trx.studentGrade.findMany({ where: { referenceId: body.submissionId } });
 
@@ -488,7 +490,7 @@ export async function scoreClasswork(req: Request, res: Response) {
                 data: {
                     title: assignment?.title,
                     studentId: submission.studentId,
-                    teacherSubjectId: assignment?.teacherAssignedSubjectId!,
+                    teacherSubjectId: assignment?.teacherSubjectId!,
                     score: body.score,
                     category: "ACTIVITY",
                     hps: assignment?.hps ?? 0,
@@ -519,13 +521,33 @@ export async function addTeacherToSubject(req: Request, res: Response) {
         teacherId: number;
     };
 
+
     const prisma = new PrismaClient();
 
-    const teacherSubject = await prisma.teacherAssignedSubject.create({
+    const matchedTeacher = await prisma.teacherSubject.findMany({
+        where: {
+            subjectId: body.subjectId,
+            teacherId: body.teacherId
+        }
+    });
+
+    if (matchedTeacher.length > 0)
+        return res.status(400).json([
+            {
+                message: "Teacher already exists.",
+                context: {
+                    label: "teacherId"
+                }
+            }
+        ] as Joi.ValidationErrorItem[]);
+
+    const currentSchoolYear = await prisma.schoolYear.findMany({ where: { isCurrent: true } });
+
+    const teacherSubject = await prisma.teacherSubject.create({
         data: {
             subjectId: body.subjectId,
             teacherId: body.teacherId,
-            schoolYearId: 1
+            schoolYearId: currentSchoolYear[0].id
         }
     });
 
@@ -870,4 +892,199 @@ export async function addSchoolYear(req: Request, res: Response) {
     });
 
     return res.status(200).json(schoolYear);
+}
+
+export async function changeCurrentSchoolYear(req: Request, res: Response) {
+    const body = req.body as {
+        adminId: number;
+        adminPassword: string;
+        schoolYearId: number;
+        isCurrent: boolean;
+    };
+
+    const prisma = new PrismaClient();
+
+    console.log(body);
+
+    try {
+        const schoolYear = await prisma.$transaction(async (tx) => {
+            const admin = await tx.user.findUnique({ where: { id: body.adminId } });
+
+            console.log(admin);
+            if (!admin)
+                throw new ErrorResponse(400, "");
+
+            if (!(await argon.verify(admin.password, body.adminPassword)))
+                throw new ErrorResponse(400, "Wrong password");
+
+            await tx.schoolYear.updateMany({
+                where: {
+                    NOT: {
+                        id: body.schoolYearId
+                    }
+                },
+                data: {
+                    // your update data here, for example:
+                    isCurrent: false
+                }
+            });
+
+            const schoolYear = await tx.schoolYear.update({
+                where: { id: body.schoolYearId },
+                data: { isCurrent: body.isCurrent }
+            });
+
+            return schoolYear;
+        });
+
+        return res.status(200).json(schoolYear);
+    } catch (error) {
+
+        console.log(error);
+
+        if (error instanceof ErrorResponse)
+            return res.status(error.status).json([
+                {
+                    message: error.message,
+                    context: { label: "password" }
+                }
+            ] as Joi.ValidationErrorItem[]);
+
+        return res.status(500).json(error);
+    }
+}
+
+export async function unlockSchoolYear(req: Request, res: Response) {
+    const schoolYearId = parseInt(req.params.id);
+    const prisma = new PrismaClient();
+
+    const matchedSchoolYear = await prisma.schoolYear.findUnique({ where: { id: schoolYearId } });
+
+    const schoolYear = await prisma.schoolYear.update({
+        where: { id: schoolYearId }, data: {
+            unlocked: !matchedSchoolYear?.unlocked
+        }
+    });
+
+    return res.status(200).json(schoolYear);
+}
+
+
+export async function enrollStudentToSection(req: Request, res: Response) {
+    const body = req.body as {
+        studentId: number;
+        sectionId: number;
+    };
+
+    const prisma = new PrismaClient();
+
+
+    const currentSchoolYear = (await prisma.schoolYear.findMany({
+        where: {
+            isCurrent: true
+        }
+    }))[0];
+
+    const matchedEnrollment = await prisma.studentEnrolledSection.findMany({
+        where: {
+            studentId: body.studentId,
+            classSectionId: body.sectionId,
+            schoolYearId: currentSchoolYear.id
+        }
+    });
+
+    if (matchedEnrollment.length > 0)
+        return res.status(400).json([
+            {
+                message: "Student already enrolled",
+                context: { label: "" }
+            }
+        ] as Joi.ValidationErrorItem[]);
+
+
+    const studentSection = await prisma.studentEnrolledSection.create({
+        data: {
+            classSectionId: body.sectionId,
+            schoolYearId: currentSchoolYear.id,
+            studentId: body.studentId
+        }
+    });
+
+    return res.status(200).json(studentSection);
+}
+
+export async function removeStudentFromSection(req: Request, res: Response) {
+    const id = parseInt(req.params.id);
+
+    const prisma = new PrismaClient();
+
+    const enrollment = await prisma.studentEnrolledSection.update({
+        where: { id: id },
+        data: {
+            deletedAt: new Date()
+        }
+    });
+
+    return res.status(200).json(enrollment);
+}
+
+export async function assignTeacherSection(req: Request, res: Response) {
+    const body = req.body as {
+        teacherSubjectId: number;
+        classSectionId: number;
+    };
+
+    const prisma = new PrismaClient();
+
+    const teachersubjectSection = await prisma.teacherSubjectSection.create({ data: body });
+
+    return res.status(200).json(teachersubjectSection);
+}
+
+export async function createAssignment(req: Request, res: Response) {
+    const body = req.body as {
+        title: string;
+        instruction: string;
+        hps: number;
+        dueDate: string;
+        teacherSubjectId: number;
+    };
+
+    const prisma = new PrismaClient();
+
+    const assignment = await prisma.assignment.create({ data: body });
+
+    return res.status(200).json(assignment);
+}
+
+export async function getStudentGrades(req: Request, res: Response) {
+    const teacherSubjectId = req.params.id;
+
+    const prisma = new PrismaClient();
+
+    const teacherSection = await prisma.teacherSubject.findUnique({
+        where: { id: parseInt(teacherSubjectId) }, include: {
+            TeacherSubjectSection: {
+                include: {
+                    classSection: {
+                        include: {
+                            StudentEnrolledSection: {
+                                include: {
+                                    student: {
+                                        include: {
+                                            StudentGrade: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    console.log(teacherSection);
+
+    return res.status(200).json(teacherSection);
 }

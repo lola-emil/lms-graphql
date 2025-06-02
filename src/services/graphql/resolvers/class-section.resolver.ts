@@ -15,11 +15,13 @@ export const classSectionTypeDefs = gql`
         updatedAt: String
 
         classLevel: ClassLevel
+        teacherSubjectSection: [TeacherSubjectSection]
     }
 
     type Query {
         classSections: [ClassSection!]!
-        classSection: ClassSection
+        classSectionsPerLevel(classLevelId: Int!): [ClassSection]
+        classSection(id: Int!): ClassSection
     }
 
     type Mutation {
@@ -29,10 +31,12 @@ export const classSectionTypeDefs = gql`
 
 export const classSectionResolvers = {
     ClassSection: {
-        classLevel: (parent: any) => prisma.classLevel.findUnique({ where: { id: parent.classLevelId } })
+        classLevel: (parent: any) => prisma.classLevel.findUnique({ where: { id: parent.classLevelId } }),
+        teacherSubjectSection: (parent: any) => prisma.teacherSubjectSection.findMany({ where: { classSectionId: parent.id } })
     },
     Query: {
         classSections: () => prisma.classSection.findMany(),
+        classSectionsPerLevel: (_: any, args: { classLevelId: number; }) => prisma.classSection.findMany({ where: { classLevelId: args.classLevelId } }),
         classSection: (_: any, args: { id: number; }) => prisma.classSection.findUnique({ where: { id: args.id } })
     },
 

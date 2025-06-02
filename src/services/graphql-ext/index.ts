@@ -53,4 +53,16 @@ router.post("/add-section", asyncHandler(Controller.addSection));
 
 router.post("/add-school-year", asyncHandler(Controller.addSchoolYear));
 
+router.post("/change-school-year", asyncHandler(Controller.changeCurrentSchoolYear));
+
+router.get("/unlock-school-year/:id", asyncHandler(Controller.unlockSchoolYear));
+
+router.post("/enroll-student-to-section", asyncHandler(Controller.enrollStudentToSection));
+
+router.post("/assign-teacher-section", asyncHandler(Controller.assignTeacherSection));
+
+router.post("/create-assignment", asyncHandler(Controller.createAssignment));
+
+router.get("/get-student-grades/:id", asyncHandler(Controller.getStudentGrades))
+
 export default router;

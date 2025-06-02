@@ -10,6 +10,8 @@ export const schoolYearTypeDefs = gql`
         yearStart: Int!
         yearEnd: Int!
 
+        isCurrent: Boolean
+
         createdAt: String!
         updatedAt: String!
     }
@@ -17,6 +19,7 @@ export const schoolYearTypeDefs = gql`
     type Query {
         schoolYears: [SchoolYear!]!
         schoolYear(id: Int): User
+        currentSchoolYear: SchoolYear
     }
 
 `;
@@ -24,7 +27,11 @@ export const schoolYearTypeDefs = gql`
 export const schoolYearResolvers = {
     Query: {
         schoolYears: () => prisma.schoolYear.findMany(),
-        schoolYear: (_: any, args: { id: number; }) => prisma.schoolYear.findUnique({ where: { id: args.id } })
+        schoolYear: (_: any, args: { id: number; }) => prisma.schoolYear.findUnique({ where: { id: args.id } }),
+        currentSchoolYear: async (_: any) => {
+            const result = await prisma.schoolYear.findMany({ where: { isCurrent: true } });
+            return result[0];
+        }
     },
 
 
