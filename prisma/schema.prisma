@@ -76,6 +76,7 @@ model SchoolYear {
     TeacherAssignedSubject TeacherAssignedSubject[]
     StudentEnrolledSection StudentEnrolledSection[]
     TeacherSubject         TeacherSubject[]
+    TeacherSubjectSection  TeacherSubjectSection[]
 }
 
 model TeacherAssignedSubject {
@@ -250,11 +251,14 @@ model TeacherSubjectSection {
     teacherSubjectId Int
     classSectionId   Int
 
+    schoolYearId Int
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
     teacherSubject TeacherSubject @relation(fields: [teacherSubjectId], references: [id])
     classSection   ClassSection   @relation(fields: [classSectionId], references: [id])
+    schoolYear     SchoolYear    @relation(fields: [schoolYearId], references: [id])
 }
 
 model Subject {
@@ -553,7 +557,6 @@ model ActivityLog {
 
     user User @relation(fields: [userId], references: [id])
 }
-
 
 enum NotificationType {
     INFO

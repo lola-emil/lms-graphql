@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, SchoolYear } from "@prisma/client";
 import gql from "graphql-tag";
 import path from "path";
 import fs from "fs";
@@ -18,7 +18,7 @@ export const subjectTypDefs = gql`
         createdAt: String!
         updatedAt: String!
 
-        teacherSubjects: [TeacherSubject!]!
+        teacherSubjects(schoolYearId: Int): [TeacherSubject!]!
 
         gradeLevel: ClassLevel
     }
@@ -32,8 +32,15 @@ export const subjectTypDefs = gql`
 
 export const subjectResolvers = {
     Subject: {
-        teacherSubjects: async (parent: any) => {
-            return await prisma.teacherSubject.findMany({ where: { subjectId: parent.id } });
+        teacherSubjects: async (parent: any, args: { schoolYearId?: number; }) => {
+            let schoolYear: SchoolYear | null;
+
+            if (!args.schoolYearId)
+                schoolYear = (await prisma.schoolYear.findMany({ where: { isCurrent: true } }))[0];
+            else
+                schoolYear = await prisma.schoolYear.findUnique({ where: { id: args.schoolYearId } });
+            
+            return await prisma.teacherSubject.findMany({ where: { subjectId: parent.id, schoolYearId: schoolYear?.id } });
         },
 
         gradeLevel: async (parent: any) => prisma.classLevel.findUnique({ where: { id: parent.classLevelId } })

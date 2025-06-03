@@ -30,6 +30,7 @@ export const subjectMaterialTypeDefs = gql`
         questions: [Question]
 
         quizSessions: [QuizSession!]
+        studentQuizSessions(studentId: Int!): [QuizSession]
     }
 
     type Query {
@@ -59,6 +60,9 @@ export const subjectMaterialResolvers = {
         },
         quizSessions: (parent: any) => {
             return prisma.quizSession.findMany({ where: { quizId: parent.id } });
+        },
+        studentQuizSessions: (parent: any, args: { studentId: number; }) => {
+            return prisma.quizSession.findMany({ where: { quizId: parent.id, studentId: args.studentId } });
         }
     },
     Query: {

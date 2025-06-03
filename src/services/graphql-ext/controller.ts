@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient, SchoolYear } from "@prisma/client";
 import { Request, Response } from "express";
 import { PORT } from "../../config/constants";
 import { mailPasswordConfirmation } from "../../util/mailer";
@@ -135,7 +135,7 @@ export async function createQuiz(req: Request, res: Response) {
     const body = req.body as {
         teacherSubjectId: number;
         title: string;
-        materialType: "QUIZ" | "EXAM"
+        materialType: "QUIZ" | "EXAM";
         questions: Question[];
     };
 
@@ -519,15 +519,27 @@ export async function addTeacherToSubject(req: Request, res: Response) {
     const body = req.body as {
         subjectId: number;
         teacherId: number;
+        schoolYearId?: number;
     };
 
 
     const prisma = new PrismaClient();
 
+
+
+    let schoolYear: SchoolYear | null;
+
+    if (!body.schoolYearId)
+        schoolYear = (await prisma.schoolYear.findMany({ where: { isCurrent: true } }))[0];
+    else
+        schoolYear = await prisma.schoolYear.findUnique({ where: { id: body.schoolYearId } });
+
+
     const matchedTeacher = await prisma.teacherSubject.findMany({
         where: {
             subjectId: body.subjectId,
-            teacherId: body.teacherId
+            teacherId: body.teacherId,
+            schoolYearId: schoolYear?.id
         }
     });
 
@@ -1032,11 +1044,25 @@ export async function assignTeacherSection(req: Request, res: Response) {
     const body = req.body as {
         teacherSubjectId: number;
         classSectionId: number;
+        schoolYearId?: number;
     };
 
     const prisma = new PrismaClient();
 
-    const teachersubjectSection = await prisma.teacherSubjectSection.create({ data: body });
+    let schoolYear: SchoolYear | null;
+
+    if (!body.schoolYearId)
+        schoolYear = (await prisma.schoolYear.findMany({ where: { isCurrent: true } }))[0];
+    else
+        schoolYear = await prisma.schoolYear.findUnique({ where: { id: body.schoolYearId } });
+
+
+    const teachersubjectSection = await prisma.teacherSubjectSection.create({
+        data: {
+            ...body,
+            schoolYearId: schoolYear!.id
+        }
+    });
 
     return res.status(200).json(teachersubjectSection);
 }

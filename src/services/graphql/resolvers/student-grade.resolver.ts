@@ -38,7 +38,7 @@ export const studentGradeDefs = gql`
 
     type Query {
         studentGrades(studentId: Int!): [StudentGrade]
-        gradePerSubject(teacherSubjectId: Int!): [StudentGrade]
+        gradePerSubject(teacherSubjectId: Int!, studentId: Int!): [StudentGrade]
         gradeOverview(studentId: Int!): [StudentGrade]
     }
 `;
@@ -46,7 +46,12 @@ export const studentGradeDefs = gql`
 export const studentGradeResolver = {
     Query: {
         studentGrades: (_: any, args: { studentId: number; }) => prisma.studentGrade.findMany({ where: { studentId: args.studentId } }),
-        gradePerSubject: (_: any, args: { teacherSubjectId: number; }) => prisma.studentGrade.findMany({ where: { teacherSubjectId: args.teacherSubjectId } }),
+        gradePerSubject: (_: any, args: { teacherSubjectId: number; studentId: number; }) => prisma.studentGrade.findMany({
+            where: {
+                teacherSubjectId: args.teacherSubjectId,
+                studentId: args.studentId
+            }
+        }),
         gradeOverview: async (_: any, args: { studentId: number; }) => {
             // const sum = await prisma.studentGrade.groupBy({
             //     by: ["teacherSubjectId", "category"],

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, SchoolYear } from "@prisma/client";
 import gql from "graphql-tag";
 
 
@@ -24,11 +24,11 @@ export const teacherSubjectTypeDef = gql`
     }
 
     type Query {
-        teacherSubjects: [TeacherSubject]
-        teacherSubjectsPerTeacher(teacherId: Int!): [TeacherSubject]
+        teacherSubjects(schoolYearId: Int): [TeacherSubject]
+        teacherSubjectsPerTeacher(teacherId: Int!, schoolYearId: Int): [TeacherSubject]
         teacherSubject(id: Int!): TeacherSubject
 
-        unassignedTeachers(subjectId: Int!): [User]
+        unassignedTeachers(subjectId: Int!, schoolYearId: Int): [User]
     }
 `;
 
@@ -38,7 +38,7 @@ export const teacherSubjectResolvers = {
         teacher: (parent: any) => prisma.user.findUnique({ where: { id: parent.teacherId } }),
         subject: (parent: any) => prisma.subject.findUnique({ where: { id: parent.subjectId } }),
         subjectMaterials: (parent: any) => prisma.subjectMaterial.findMany({ where: { teacherSubjectId: parent.id } }),
-        schoolYear: (parent: any) => prisma.schoolYear.findUnique({where: {id: parent.schoolYearId}})
+        schoolYear: (parent: any) => prisma.schoolYear.findUnique({ where: { id: parent.schoolYearId } })
     },
     Query: {
         teacherSubjects,
@@ -49,8 +49,19 @@ export const teacherSubjectResolvers = {
 };
 
 
-async function teacherSubjects(_: any) {
-    return prisma.teacherSubject.findMany();
+async function teacherSubjects(_: any, args: { schoolYearId?: number; }) {
+    let matchedSchoolYear: SchoolYear | null;
+
+    if (!args.schoolYearId)
+        matchedSchoolYear = (await prisma.schoolYear.findMany({ where: { isCurrent: true } }))[0];
+    else
+        matchedSchoolYear = await prisma.schoolYear.findUnique({ where: { id: args.schoolYearId } });
+
+    return prisma.teacherSubject.findMany({
+        where: {
+            schoolYearId: args.schoolYearId ?? matchedSchoolYear?.id
+        }
+    });
 }
 
 
@@ -58,10 +69,17 @@ async function teacherSubject(_: any, args: { id: number; }) {
     return prisma.teacherSubject.findUnique({ where: { id: args.id } });
 }
 
-async function unassignedTeachers(_: any, args: { subjectId: number; }) {
-    const teacherSubjects = await prisma.teacherSubject.findMany({ where: { subjectId: args.subjectId } });
-    const teacherIds = teacherSubjects.map(val => val.teacherId);
+async function unassignedTeachers(_: any, args: { subjectId: number; schoolYearId?: number; }) {
 
+    let schoolYear: SchoolYear | null;
+
+    if (!args.schoolYearId)
+        schoolYear = (await prisma.schoolYear.findMany({ where: { isCurrent: true } }))[0];
+    else
+        schoolYear = await prisma.schoolYear.findUnique({ where: { id: args.schoolYearId } });
+
+    const teacherSubjects = await prisma.teacherSubject.findMany({ where: { subjectId: args.subjectId, schoolYearId: schoolYear?.id } });
+    const teacherIds = teacherSubjects.map(val => val.teacherId);
     const teachers = await prisma.user.findMany({
         where: {
             id: { notIn: teacherIds },
@@ -72,6 +90,14 @@ async function unassignedTeachers(_: any, args: { subjectId: number; }) {
     return teachers;
 }
 
-async function teacherSubjectsPerTeacher(_: any, args: { teacherId: number; }) {
-    return prisma.teacherSubject.findMany({ where: { teacherId: args.teacherId } });
+async function teacherSubjectsPerTeacher(_: any, args: { teacherId: number; schoolYearId?: number; }) {
+    let schoolYear: SchoolYear | null;
+
+    if (!args.schoolYearId)
+        schoolYear = (await prisma.schoolYear.findMany({ where: { isCurrent: true } }))[0];
+    else
+        schoolYear = await prisma.schoolYear.findUnique({ where: { id: args.schoolYearId } });
+
+
+    return prisma.teacherSubject.findMany({ where: { teacherId: args.teacherId, schoolYearId: schoolYear?.id } });
 }

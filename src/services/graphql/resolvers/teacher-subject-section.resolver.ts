@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, SchoolYear } from "@prisma/client";
 import gql from "graphql-tag";
 
 
@@ -13,6 +13,8 @@ export const teacherSubjectSectionTypeDefs = gql`
         teacherSubjectId: Int
         classSectionId: Int
 
+        schoolYearId: Int
+
         createdAt: String
         updatedAt: String
 
@@ -21,9 +23,9 @@ export const teacherSubjectSectionTypeDefs = gql`
     }
 
     type Query {
-        teacherSubjectSections: [TeacherSubjectSection]
+        teacherSubjectSections(schoolYearId: Int): [TeacherSubjectSection]
         teacherSubjectSectionsPerTeacher(teacherSubjectId: Int!): [TeacherSubjectSection]
-        teacherSubjectSectionsPerSection(sectionId: Int!): [TeacherSubjectSection],
+        teacherSubjectSectionsPerSection(sectionId: Int!, schoolYearId: Int): [TeacherSubjectSection],
         teacherSubjectSection(id: Int!): TeacherSubjectSection
     }
 `;
@@ -42,8 +44,15 @@ export const teacherSubjectSectionResolver = {
     }
 };
 
-async function teacherSubjectSections(_: any) {
-    return prisma.teacherSubjectSection.findMany();
+async function teacherSubjectSections(_: any, args: { schoolYearId?: number; }) {
+    let schoolYear: SchoolYear | null;
+
+    if (!args.schoolYearId)
+        schoolYear = (await prisma.schoolYear.findMany({ where: { isCurrent: true } }))[0];
+    else
+        schoolYear = await prisma.schoolYear.findUnique({ where: { id: args.schoolYearId } });
+
+    return prisma.teacherSubjectSection.findMany({ where: { schoolYearId: schoolYear?.id } });
 }
 
 async function teacherSubjectSection(_: any, args: { id: number; }) {
@@ -57,8 +66,18 @@ async function teacherSubjectSectionsPerTeacher(_: any, args: { teacherSubjectId
     });
 }
 
-async function teacherSubjectSectionsPerSection(_: any, args: { sectionId: number; }) {
-    return prisma.teacherSubjectSection.findMany({where: {
-        classSectionId: args.sectionId
-    }})
- }
+async function teacherSubjectSectionsPerSection(_: any, args: { sectionId: number; schoolYearId?: number; }) {
+    let schoolYear: SchoolYear | null;
+
+    if (!args.schoolYearId)
+        schoolYear = (await prisma.schoolYear.findMany({ where: { isCurrent: true } }))[0];
+    else
+        schoolYear = await prisma.schoolYear.findUnique({ where: { id: args.schoolYearId } });
+
+    return prisma.teacherSubjectSection.findMany({
+        where: {
+            classSectionId: args.sectionId,
+            schoolYearId: schoolYear?.id
+        }
+    });
+}
