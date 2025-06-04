@@ -26,7 +26,11 @@ export const schoolYearTypeDefs = gql`
 
 export const schoolYearResolvers = {
     Query: {
-        schoolYears: () => prisma.schoolYear.findMany(),
+        schoolYears: () => prisma.schoolYear.findMany({
+            orderBy: {
+                id: "desc"
+            }
+        }),
         schoolYear: (_: any, args: { id: number; }) => prisma.schoolYear.findUnique({ where: { id: args.id } }),
         currentSchoolYear: async (_: any) => {
             const result = await prisma.schoolYear.findMany({ where: { isCurrent: true } });
